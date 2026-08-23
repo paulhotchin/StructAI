@@ -1,0 +1,40 @@
+﻿@using StructAI.Wizard
+@using StructAI.Model
+@inject StructAI.Services.WizardEngine Wizard
+
+<div class="field">
+    <label>@Field?.Label</label>
+
+    @foreach (var p in Points) {
+        <div>
+            <input type="number" @bind="p.X" />
+            <input type="number" @bind="p.Y" />
+        </div>
+    }
+
+    <button @onclick="AddPoint">Add Point</button>
+    <small>@Field?.UI?.Hint</small>
+</div>
+
+@code {
+    [Parameter] public WizardField? Field { get; set; }
+
+    protected override void OnParametersSet() {
+        if (Field is null)
+            throw new InvalidOperationException("PointListField: Field parameter is required.");
+    }
+
+    private List<Point> Points {
+        get {
+            if (Field?.Bind is null)
+                throw new InvalidOperationException("PointListField: Field.Bind is required.");
+
+            // Resolve nested path: Site.Boundary
+            return Wizard.ResolvePath<List<Point>>(Field.Bind);
+        }
+    }
+
+    private void AddPoint() {
+        Points.Add(new Point { X = 0, Y = 0 });
+    }
+}

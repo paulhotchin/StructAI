@@ -1,0 +1,25 @@
+﻿@using StructAI.Wizard
+@using StructAI.Components.Fields
+
+@switch (Field?.Type) {
+    case "Number":
+        <NumberField Field="Field" />
+        break;
+
+    case "PointList":
+        <PointListField Field="Field" />
+        break;
+
+    default:
+        <p>Unsupported field type: @Field?.Type</p>
+        break;
+}
+
+@code {
+    [Parameter] public WizardField? Field { get; set; }
+
+    protected override void OnParametersSet() {
+        if (Field is null)
+            throw new InvalidOperationException("FieldRenderer: Field parameter is required.");
+    }
+}

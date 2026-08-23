@@ -1,0 +1,46 @@
+﻿@using StructAI.Wizard
+@inject StructAI.Services.WizardEngine Wizard
+
+<div class="field">
+    <label>@Field?.Label</label>
+    <input type="number" @bind="Value" />
+    <small>@Field?.UI?.Hint</small>
+</div>
+
+@code {
+    [Parameter] public WizardField? Field { get; set; }
+
+    protected override void OnParametersSet() {
+        if (Field is null)
+            throw new InvalidOperationException("NumberField: Field parameter is required.");
+    }
+
+    private double Value {
+        get {
+            if (Field?.Bind is null)
+                throw new InvalidOperationException("NumberField: Field.Bind is required.");
+
+            // Resolve nested path: Site.RealNorthDegrees
+            var raw = Wizard.ResolvePath<object>(Field.Bind);
+
+            return raw is null ? 0.0 : Convert.ToDouble(raw);
+        }
+        set {
+            if (Field?.Bind is null)
+                throw new InvalidOperationException("NumberField: Field.Bind is required.");
+
+            // Resolve parent object and property
+            var parts = Field.Bind.Split('.');
+            var parentPath = string.Join('.', parts.Take(parts.Length - 1));
+            var propName = parts.Last();
+
+            var parentObj = Wizard.ResolvePath<object>(parentPath);
+
+            var prop = parentObj.GetType().GetProperty(propName)
+                ?? throw new InvalidOperationException(
+                    $"NumberField: Property '{propName}' not found on '{parentObj.GetType().Name}'.");
+
+            prop.SetValue(parentObj, value);
+        }
+    }
+}

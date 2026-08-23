@@ -1,0 +1,33 @@
+﻿@page "/command-test"
+
+@using StructAI.AI.Pipeline
+
+@inject CommandRunnerService Runner
+
+<h3>AI Command Runner Test</h3>
+
+<div class="mb-3">
+    <label class="form-label">Enter command</label>
+    <input class="form-control" @bind="Input" />
+</div>
+
+<button class="btn btn-success" @onclick="Run">Run</button>
+
+@if (ResultJson != null) {
+    <h4 class="mt-3">Result</h4>
+    <pre>@ResultJson</pre>
+}
+
+@code {
+    private string Input = string.Empty;
+    private string? ResultJson;
+
+    private async Task Run() {
+        var result = await Runner.RunAsync(Input);
+
+        ResultJson = System.Text.Json.JsonSerializer.Serialize(
+            result,
+            new System.Text.Json.JsonSerializerOptions { WriteIndented = true }
+        );
+    }
+}

@@ -1,0 +1,12 @@
+# Ignore build folders inside StructAI
+bin/
+obj/
+
+
+wwwroot/
+*.user
+*.suo
+*.cache
+*.log
+*.tmp
+*.db
