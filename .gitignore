@@ -2,11 +2,29 @@
 bin/
 obj/
 
-
-wwwroot/
 *.user
 *.suo
 *.cache
 *.log
 *.tmp
 *.db
+
+
+.vs/
+
+# Ignore Blazor build output
+wwwroot/_framework/
+wwwroot/service-worker-assets.js
+wwwroot/*.dll
+wwwroot/*.pdb
+wwwroot/*.wasm
+wwwroot/*.map
+
+# Track your actual assets
+!wwwroot/css/**
+!wwwroot/metadata/**
+!wwwroot/models/**
+!wwwroot/*.html
+!wwwroot/*.ico
+!wwwroot/manifest*
+!wwwroot/service-worker.js
