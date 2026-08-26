@@ -6,35 +6,141 @@
     <label>@Field?.Label</label>
 
     @foreach (var p in Points) {
-        <div>
-            <input type="number" @bind="p.X" />
-            <input type="number" @bind="p.Y" />
+        <div class="point-row">
+            <input type="number" @bind="p.X" @oninput="(_) => StateHasChanged()" />
+            <input type="number" @bind="p.Y" @oninput="(_) => StateHasChanged()" />
+            <button class="delete-btn" @onclick="() => DeletePoint(p)">Delete</button>
         </div>
     }
 
-    <button @onclick="AddPoint">Add Point</button>
+    <button class="add-btn" @onclick="AddPoint">Add Point</button>
     <small>@Field?.UI?.Hint</small>
+
+    @if (ValidationMessages.Any()) {
+        <div class="validation-block">
+            @foreach (var msg in ValidationMessages) {
+                <div class="validation-error">@msg</div>
+            }
+        </div>
+    }
+
+    @if (Points.Count >= 2) {
+        <svg width="300" height="300" class="preview-svg">
+            <polyline points="@SvgPoints" stroke="black" fill="none" stroke-width="2" />
+            <g class="north-symbol"
+               transform="@($"translate(260,40) rotate({Model.Site.RealNorthDegrees})")">
+
+                <line x1="0" y1="20" x2="0" y2="-20" stroke="red" stroke-width="3" />
+                <polygon points="-6,-20 6,-20 0,-30" fill="red" />
+                <text x="0" y="-40" text-anchor="middle" font-size="16" fill="red">N</text>
+            </g>
+        </svg>
+    }
+
+    @if (Points.Count >= 3) {
+        <div class="geometry-summary">
+            <div>Area: @Area()</div>
+            <div>Perimeter: @Perimeter()</div>
+        </div>
+    }
 </div>
 
 @code {
     [Parameter] public WizardField? Field { get; set; }
+    
+    private GroundFloor Model => Wizard.Model as GroundFloor
+        ?? throw new InvalidOperationException("Wizard.Model is not GroundFloorModel");
+
+    private string BindPath = default!;
 
     protected override void OnParametersSet() {
         if (Field is null)
             throw new InvalidOperationException("PointListField: Field parameter is required.");
+
+        if (string.IsNullOrWhiteSpace(Field.Bind))
+            throw new InvalidOperationException("PointListField: Field.Bind is required.");
+
+        BindPath = Field.Bind;
     }
 
-    private List<Point> Points {
-        get {
-            if (Field?.Bind is null)
-                throw new InvalidOperationException("PointListField: Field.Bind is required.");
+    private List<Point> Points => Wizard.ResolvePath<List<Point>>(BindPath);
 
-            // Resolve nested path: Site.Boundary
-            return Wizard.ResolvePath<List<Point>>(Field.Bind);
+    private void AddPoint() {
+        Points.Add(new Point());
+        StateHasChanged();
+    }
+
+    private void DeletePoint(Point p) {
+        Points.Remove(p);
+        StateHasChanged();
+    }
+
+    private IEnumerable<string> ValidationMessages {
+        get {
+            if (Points.Count < 3)
+                yield return "At least 3 points are required to form a polygon.";
+
+            if (Points.GroupBy(p => (p.X, p.Y)).Any(g => g.Count() > 1))
+                yield return "Duplicate points detected.";
+
+            if (Points.Any(p => p.X < 0 || p.Y < 0))
+                yield return "Coordinates must be non-negative.";
         }
     }
 
-    private void AddPoint() {
-        Points.Add(new Point { X = 0, Y = 0 });
+    private string SvgPoints {
+        get {
+            if (Points.Count == 0)
+                return string.Empty;
+
+            var minX = Points.Min(p => p.X);
+            var maxX = Points.Max(p => p.X);
+            var minY = Points.Min(p => p.Y);
+            var maxY = Points.Max(p => p.Y);
+
+            var spanX = maxX - minX;
+            var spanY = maxY - minY;
+
+            if (spanX == 0) spanX = 1;
+            if (spanY == 0) spanY = 1;
+
+            const double size = 280.0;
+            const double offset = 10.0;
+
+            var mapped = Points.Select(p => {
+                var nx = (p.X - minX) / spanX;
+                var ny = (p.Y - minY) / spanY;
+
+                var sx = offset + nx * size;
+                var sy = offset + (1 - ny) * size;
+
+                return $"{sx},{sy}";
+            }).ToList();
+
+            // AUTO‑CLOSE: append first point at end
+            mapped.Add(mapped[0]);
+
+            return string.Join(" ", mapped);
+        }
+    }
+
+    private double Area() {
+        double sum = 0;
+        for (int i = 0; i < Points.Count; i++) {
+            var a = Points[i];
+            var b = Points[(i + 1) % Points.Count];
+            sum += (a.X * b.Y) - (b.X * a.Y);
+        }
+        return Math.Abs(sum) / 2.0;
+    }
+
+    private double Perimeter() {
+        double sum = 0;
+        for (int i = 0; i < Points.Count - 1; i++) {
+            var a = Points[i];
+            var b = Points[i + 1];
+            sum += Math.Sqrt(Math.Pow(b.X - a.X, 2) + Math.Pow(b.Y - a.Y, 2));
+        }
+        return sum;
     }
 }

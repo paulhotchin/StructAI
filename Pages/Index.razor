@@ -15,13 +15,28 @@
         <FieldRenderer Field="field" />
     }
 
+    <button @onclick="Save">Save</button>
     <button @onclick="Engine.PreviousStep">Back</button>
     <button @onclick="Engine.NextStep">Next</button>
 }
 
 @code {
+    // private bool _loaded;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        if (firstRender) {
+            await Engine.LoadModelAsync(Http);
+            // _loaded = true;
+            StateHasChanged();
+        }
+    }
+
     protected override async Task OnInitializedAsync() {
         await Engine.LoadMetadataAsync(Http);
         await Engine.LoadModelAsync(Http);
+    }
+
+    private async Task Save() {
+        await Engine.SaveModelAsync();
     }
 }

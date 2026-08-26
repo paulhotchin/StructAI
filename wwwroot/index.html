@@ -6,28 +6,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>StructAI</title>
 
-    <base href="/" />
+	<base href="/StructAI/" />
+
+    <link rel="icon" type="image/png" href="favicon-32.png">
+    <link href="css/app.css" rel="stylesheet" />
 
     <!-- PWA manifest -->
     <link href="manifest.webmanifest" rel="manifest" />
 
-    <!-- Blazor WASM loader -->
-    <script src="_framework/blazor.webassembly.js"></script>
+    <script src="js/storage.js"></script>
 
     <script>
-        window.Blazor.defaultOptions = {
-            logLevel: "debug"
+        window.Blazor = {
+            defaultOptions: {
+                logLevel: "debug"
+            }
         };
     </script>
 </head>
 
 <body>
     <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+        <div class="structai-loading">aa Loading StructAI <span class="dots"></span></div>
     </div>
 
     <div id="blazor-error-ui">
@@ -36,9 +36,16 @@
         <span class="dismiss">🗙</span>
     </div>
 
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script>
+        Blazor.start();
+    </script>
+
     <!-- Register PWA service worker -->
     <script>
-        navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' });
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' });
+        }
     </script>
 </body>
 

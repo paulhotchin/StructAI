@@ -1,6 +1,8 @@
-﻿using System.Text.Json;
-using StructAI.Wizard;
+﻿using Microsoft.JSInterop;
 using StructAI.Model;
+using StructAI.Services;
+using StructAI.Wizard;
+using System.Text.Json;
 
 namespace StructAI.Services;
 
@@ -14,6 +16,12 @@ public class WizardEngine {
             PropertyNameCaseInsensitive = true
         };
 
+    private readonly IJSRuntime _js;
+
+    public WizardEngine(IJSRuntime js) {
+        _js = js;
+    }
+
     public async Task LoadMetadataAsync(HttpClient http) {
         var json = await http.GetStringAsync("metadata/GroundFloorWizard.json");
 
@@ -26,15 +34,34 @@ public class WizardEngine {
         if (Definition.Steps == null || Definition.Steps.Count == 0)
             throw new InvalidOperationException("WizardEngine: no steps defined in metadata.");
     }
-
     public async Task LoadModelAsync(HttpClient http) {
-        var json = await http.GetStringAsync("models/GroundFloor.json");
+        // Check if JS is ready
+        var isReady = await _js.InvokeAsync<bool>("Boolean", "window.structAI !== undefined");
 
-        if (string.IsNullOrWhiteSpace(json))
-            throw new InvalidOperationException("WizardEngine: model JSON is empty.");
+        if (!isReady) {
+            // JS not ready yet → load default model
+            var json = await http.GetStringAsync("models/GroundFloor.json");
+            Model = JsonSerializer.Deserialize<GroundFloor>(json);
+            return;
+        }
 
-        Model = JsonSerializer.Deserialize<GroundFloor>(json, _jsonOptions)
-            ?? throw new InvalidOperationException("WizardEngine: failed to deserialize model.");
+        var saved = await _js.InvokeAsync<string>("structAI.load", "GroundFloorModel");
+
+        if (!string.IsNullOrEmpty(saved)) {
+            Model = JsonSerializer.Deserialize<GroundFloor>(saved);
+            return;
+        }
+
+        var defaultJson = await http.GetStringAsync("models/GroundFloor.json");
+        Model = JsonSerializer.Deserialize<GroundFloor>(defaultJson);
+    }
+
+    public async Task SaveModelAsync() {
+        var json = JsonSerializer.Serialize(Model, new JsonSerializerOptions {
+            WriteIndented = true
+        });
+
+        await _js.InvokeVoidAsync("structAI.save", "GroundFloorModel", json);
     }
 
     public WizardStep GetStep(int index) {

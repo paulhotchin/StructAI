@@ -8,6 +8,7 @@ using StructAI.AI.Prompting;
 using StructAI.AI.Routing;
 using StructAI.Services;
 using System.Text.Json;
+// using Microsoft.AspNetCore.Components.Web.Extensions
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
