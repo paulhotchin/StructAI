@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="../StructAI2/StructAI2.csproj" />
+  <Project Path="StructAI.csproj" />
+</Solution>

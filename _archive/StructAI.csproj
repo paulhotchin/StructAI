@@ -1,0 +1,70 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+    <RootNamespace>StructAI</RootNamespace>
+    <RazorComponentNamespaceRoot>StructAI</RazorComponentNamespaceRoot>
+
+    <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
+    <UseNativeAot>false</UseNativeAot>
+
+    <WasmNative>false</WasmNative>
+    <RunAOTCompilation>false</RunAOTCompilation>
+    <PublishAot>false</PublishAot>
+    <UseWebAssemblyRuntime>false</UseWebAssemblyRuntime>
+    <UseWebAssembly>true</UseWebAssembly>
+    
+    <!-- CRITICAL FIX -->
+    <PreserveCompilationContext>false</PreserveCompilationContext>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <RazorComponentNamespaceMapping Include="Components" Namespace="StructAI.Components" />
+    <RazorComponentNamespaceMapping Include="Components\Fields" Namespace="StructAI.Components.Fields" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.8" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\PublishProfiles\" />
+  </ItemGroup>
+
+  <!-- Exclude ALL deploy assets from dev build -->
+  <ItemGroup>
+    <None Include="wwwroot.deploy\**\*.*" CopyToOutputDirectory="Never" />
+  </ItemGroup>
+
+  <!-- Swap index.html for publish -->
+  <Target Name="SwapIndexForPublish" AfterTargets="Publish">
+    <Message Importance="high" Text="Swapping index.html for GitHub Pages deployment..." />
+    <Copy SourceFiles="wwwroot.deploy\index.deploy.html" DestinationFiles="$(PublishDir)wwwroot\index.html" OverwriteReadOnlyFiles="true" />
+  </Target>
+
+  <!-- Copy PWA assets into publish output -->
+  <Target Name="CopyDeployAssets" AfterTargets="Publish">
+    <Copy SourceFiles="wwwroot.deploy\manifest.webmanifest" DestinationFolder="$(PublishDir)wwwroot" />
+    <Copy SourceFiles="wwwroot.deploy\service-worker.js" DestinationFolder="$(PublishDir)wwwroot" />
+    <Copy SourceFiles="wwwroot.deploy\icon-192.png" DestinationFolder="$(PublishDir)wwwroot" />
+    <Copy SourceFiles="wwwroot.deploy\icon-512.png" DestinationFolder="$(PublishDir)wwwroot" />
+    <Copy SourceFiles="wwwroot.deploy\.nojekyll" DestinationFolder="$(PublishDir)wwwroot" />
+  </Target>
+
+  <!-- JSON startup data -->
+  <ItemGroup>
+    <None Include="AppData\metadata\**\*.*" CopyToOutputDirectory="Always" />
+    <None Include="AppData\models\**\*.*" CopyToOutputDirectory="Always" />
+  </ItemGroup>
+
+  <Target Name="ForceWasmOutputType" AfterTargets="PrepareForBuild">
+    <PropertyGroup>
+      <OutputType>Library</OutputType>
+      <UseWebAssembly>true</UseWebAssembly>
+    </PropertyGroup>
+  </Target>
+</Project>

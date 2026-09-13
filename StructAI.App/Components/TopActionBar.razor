@@ -1,0 +1,18 @@
+<!-- E:\work\TQ\Kepler\StructAI\StructAI.App\Components\TopActionBar.razor -->
+<div class="top-action-bar">
+    <div class="tab-left">
+        <h2 class="page-title">@Title</h2>
+    </div>
+
+    <div class="tab-right">
+        @if (OnSave.HasDelegate)
+        {
+            <button class="action-btn primary" @onclick="OnSave">Save</button>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public EventCallback OnSave { get; set; }
+}

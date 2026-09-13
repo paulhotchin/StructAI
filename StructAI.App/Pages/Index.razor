@@ -1,0 +1,58 @@
+﻿@* E:\work\TQ\Kepler\StructAI\StructAI.App\Pages\Index.razor *@
+@page "/"
+
+@using StructAI.Components
+@using StructAI.Services 
+
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject WizardEngine Engine
+
+@layout MainLayout
+
+@if (Engine.Definition is null || Engine.Model is null) {
+    <p>Loading wizard...</p>
+} else {
+    <p>@Engine.CurrentStep.Description</p>
+
+    @foreach (var field in Engine.CurrentStep.Fields) {
+        <FieldRenderer Field="field" />
+    }
+    @* <button @onclick="Save">Save</button>
+    <button @onclick="Engine.PreviousStep">Back</button>
+    <button @onclick="Engine.NextStep">Next</button> *@
+}
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await Engine.LoadMetadataAsync(Http);
+                await Engine.LoadModelAsync(Http);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("CRASH: " + ex.Message);
+                throw;
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Engine.LoadMetadataAsync(Http);
+        await Engine.LoadModelAsync(Http);
+
+        StateHasChanged(); // force re-render
+    }
+@* 
+    private async Task Save() {
+        Console.WriteLine("async Task Save SAVE TRIGGERED");
+        await Engine.SaveModelAsync();
+    } *@
+}

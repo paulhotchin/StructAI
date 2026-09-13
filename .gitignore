@@ -1,16 +1,17 @@
 # Ignore build folders inside StructAI
 bin/
 obj/
+publish/
+TestResults/
 
+# VS / Rider
+.vs/
+.idea/
 *.user
 *.suo
 *.cache
-*.log
 *.tmp
 *.db
-
-
-.vs/
 
 # Ignore Blazor build output
 wwwroot/_framework/
@@ -19,6 +20,12 @@ wwwroot/*.dll
 wwwroot/*.pdb
 wwwroot/*.wasm
 wwwroot/*.map
+
+*.log
+
+# OS junk
+Thumbs.db
+.DS_Store
 
 # Track your actual assets
 !wwwroot/css/**

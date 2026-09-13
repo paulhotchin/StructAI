@@ -1,0 +1,90 @@
+﻿<!-- E:\work\TQ\Kepler\StructAI\StructAI.App\Layout\MainLayout.razor -->
+@inherits LayoutComponentBase
+@inject NavigationManager Nav
+@inject WizardEngine Engine
+@inject HttpClient Http
+
+<!-- DESKTOP TITLE BAR -->
+<div class="desktop-title-bar">
+    StructAI
+</div>
+
+<!-- DESKTOP SIDEBAR -->
+<div class="sidebar-desktop">
+    <NavMenu />
+</div>
+
+<!-- MAIN PAGE -->
+<div class="page">
+    <main>
+
+        @if (IsWizardPage)
+        {
+            <!-- Wizard Top Bar -->
+            <TopActionBar Title="@CurrentPageTitle" OnSave="Save" />
+
+            <!-- Wizard Scroll Container -->
+            <div class="wizard-scroll">
+                @Body
+            </div>
+
+            <!-- Wizard Bottom Bar -->
+            <BottomActionBar
+                OnPrev="PrevStep"
+                OnNext="NextStep"
+                DisablePrev="@Engine.IsFirstStep"
+                DisableNext="@Engine.IsLastStep" />
+        }
+        else
+        {
+            <!-- Normal Page Scroll Container -->
+            <div class="page-content">
+                @Body
+            </div>
+        }
+
+    </main>
+</div>
+
+<!-- MOBILE TOP BAR -->
+<div class="menu-bar">
+    <div class="menu-bar-inner">
+        <span class="app-title">StructAI</span>
+
+        <button class="navbar-toggler" @onclick="ToggleMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<!-- MOBILE OVERLAY MENU -->
+<div class="menu-overlay @(isMenuOpen ? "open" : "")">
+    <div class="menu-drawer">
+        <NavMenu OnToggle="ToggleMenu" />
+    </div>
+</div>
+
+@code {
+    bool isMenuOpen;
+
+    void ToggleMenu() => isMenuOpen = !isMenuOpen;
+
+    string CurrentPageTitle =>
+        Engine?.Definition?.Steps == null || Engine.Definition.Steps.Count == 0
+            ? "Loading..."
+            : Engine.CurrentStep?.Name ?? "Untitled";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Engine.LoadMetadataAsync(Http);
+        await Engine.LoadModelAsync(Http);
+        StateHasChanged();
+    }
+
+    async Task Save() => await Engine.SaveModelAsync();
+    void NextStep() => Engine.NextStep();
+    void PrevStep() => Engine.PreviousStep();
+
+    private bool IsWizardPage =>
+        Nav.Uri.EndsWith("/") || Nav.Uri.EndsWith("/index");
+}

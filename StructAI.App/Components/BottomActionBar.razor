@@ -1,0 +1,13 @@
+<!-- E:\work\TQ\Kepler\StructAI\StructAI.App\Components\BottomActionBar.razor -->
+<div class="bottom-action-bar">
+    <button class="action-btn secondary" @onclick="OnPrev" disabled="@DisablePrev">Back</button>
+    <button class="action-btn primary" @onclick="OnNext" disabled="@DisableNext">Next</button>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnPrev { get; set; }
+    [Parameter] public EventCallback OnNext { get; set; }
+
+    [Parameter] public bool DisablePrev { get; set; }
+    [Parameter] public bool DisableNext { get; set; }
+}
