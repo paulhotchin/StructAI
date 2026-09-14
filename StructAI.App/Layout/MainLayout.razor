@@ -86,5 +86,6 @@
     void PrevStep() => Engine.PreviousStep();
 
     private bool IsWizardPage =>
-        Nav.Uri.EndsWith("/") || Nav.Uri.EndsWith("/index");
+        @* Nav.Uri.EndsWith("/") || Nav.Uri.EndsWith("/index"); *@
+        Nav.Uri.EndsWith("/index");
 }
