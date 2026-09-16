@@ -1,0 +1,22 @@
+﻿@using StructAI.Wizard
+
+<div class="field">
+    <label>@Field.Label</label>
+
+    <InputText @bind-Value="value" class="form-control" />
+
+    @if (!string.IsNullOrWhiteSpace(Field.UI?.Hint))
+    {
+        <small class="text-muted">@Field.UI.Hint</small>
+    }
+</div>
+
+@code {
+    [Parameter] public WizardField Field { get; set; } = default!;
+
+    private string? value
+    {
+        get => Field.GetValue<string>();
+        set => Field.SetValue(value);
+    }
+}

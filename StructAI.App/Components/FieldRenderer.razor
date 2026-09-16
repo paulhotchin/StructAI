@@ -1,13 +1,35 @@
-﻿@using StructAI.Wizard
+﻿@* E:\work\TQ\Kepler\StructAI\StructAI.App\Components\FieldRenderer.razor *@
+@using StructAI.Wizard
 @using StructAI.Components.Fields
 
-@switch (Field?.Type) {
-    case "Number":
+@{
+    var type = Field?.Type?.Trim().ToLower();
+}
+
+@switch (type)
+{
+    case "number":
         <NumberField Field="Field" />
         break;
 
-    case "PointList":
+    case "pointlist":
         <PointListField Field="Field" />
+        break;
+
+    case "text":
+    case "string":
+        <TextField Field="Field" />
+        break;
+
+    case "checkbox":
+    case "bool":
+    case "boolean":
+        <CheckboxField Field="Field" />
+        break;
+
+    case "select":
+    case "dropdown":
+        <SelectField Field="Field" />
         break;
 
     default:
@@ -18,7 +40,8 @@
 @code {
     [Parameter] public WizardField? Field { get; set; }
 
-    protected override void OnParametersSet() {
+    protected override void OnParametersSet()
+    {
         if (Field is null)
             throw new InvalidOperationException("FieldRenderer: Field parameter is required.");
     }

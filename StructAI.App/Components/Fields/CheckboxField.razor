@@ -1,0 +1,23 @@
+﻿@using StructAI.Wizard
+
+<div class="field">
+    <label>
+        <InputCheckbox @bind-Value="value" />
+        @Field.Label
+    </label>
+
+    @if (!string.IsNullOrWhiteSpace(Field.UI?.Hint))
+    {
+        <small class="text-muted">@Field.UI.Hint</small>
+    }
+</div>
+
+@code {
+    [Parameter] public WizardField Field { get; set; } = default!;
+
+    private bool value
+    {
+        get => Field.GetValue<bool>();
+        set => Field.SetValue(value);
+    }
+}

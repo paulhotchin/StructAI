@@ -1,4 +1,5 @@
-﻿namespace StructAI.Model;
+﻿// E:\work\TQ\Kepler\StructAI\StructAI.App\Model\GroundFloor.cs
+namespace StructAI.Model;
 
 public class GroundFloor {
     public Site Site { get; set; } = new();
@@ -7,7 +8,19 @@ public class GroundFloor {
 
 public class Site {
     public double RealNorthDegrees { get; set; }
-    public List<Point> Boundary { get; set; } = new();
+
+    // Default boundary polygon (restored)
+    public List<Point> Boundary { get; set; } = new()
+    {
+        new Point { X = 0, Y = 0 },
+        new Point { X = 14000, Y = 0 },
+        // new Point { X = 14000, Y = 9500 },
+        new Point { X = 0, Y = 9500 }
+    };
+
+    // Computed fields
+    public double BoundaryPerimeter { get; set; }
+    public double BoundaryArea { get; set; }    
 }
 
 public class Slab {

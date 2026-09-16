@@ -1,46 +1,53 @@
 ﻿@using StructAI.Wizard
-@inject StructAI.Services.WizardEngine Wizard
+@using System.Text.Json
 
 <div class="field">
-    <label>@Field?.Label</label>
-    <input type="number" @bind="Value" />
-    <small>@Field?.UI?.Hint</small>
+    <label>@Field.Label</label>
+
+    <InputNumber TValue="double" @bind-Value="value" class="form-control" />
+
+    @if (!string.IsNullOrWhiteSpace(Field.UI?.Hint))
+    {
+        <small class="text-muted">@Field.UI.Hint</small>
+    }
 </div>
 
 @code {
-    [Parameter] public WizardField? Field { get; set; }
+    [Parameter] public WizardField Field { get; set; } = default!;
 
-    protected override void OnParametersSet() {
-        if (Field is null)
-            throw new InvalidOperationException("NumberField: Field parameter is required.");
+    private double value
+    {
+        get => ReadNumericValue();
+        set => Field.SetValue(value);
     }
 
-    private double Value {
-        get {
-            if (Field?.Bind is null)
-                throw new InvalidOperationException("NumberField: Field.Bind is required.");
+    private double ReadNumericValue()
+    {
+        object? raw = Field.GetValue<object>();
 
-            // Resolve nested path: Site.RealNorthDegrees
-            var raw = Wizard.ResolvePath<object>(Field.Bind);
+        if (raw == null)
+            return 0;
 
-            return raw is null ? 0.0 : Convert.ToDouble(raw);
+        if (raw is double d)
+            return d;
+
+        if (raw is IConvertible conv)
+            return Convert.ToDouble(conv);
+
+        if (raw is JsonElement je)
+        {
+            if (je.ValueKind == JsonValueKind.Number && je.TryGetDouble(out double jd))
+                return jd;
+
+            if (je.ValueKind == JsonValueKind.String && double.TryParse(je.GetString(), out double js))
+                return js;
+
+            return 0;
         }
-        set {
-            if (Field?.Bind is null)
-                throw new InvalidOperationException("NumberField: Field.Bind is required.");
 
-            // Resolve parent object and property
-            var parts = Field.Bind.Split('.');
-            var parentPath = string.Join('.', parts.Take(parts.Length - 1));
-            var propName = parts.Last();
+        if (raw is string s && double.TryParse(s, out double parsed))
+            return parsed;
 
-            var parentObj = Wizard.ResolvePath<object>(parentPath);
-
-            var prop = parentObj.GetType().GetProperty(propName)
-                ?? throw new InvalidOperationException(
-                    $"NumberField: Property '{propName}' not found on '{parentObj.GetType().Name}'.");
-
-            prop.SetValue(parentObj, value);
-        }
+        return 0;
     }
 }

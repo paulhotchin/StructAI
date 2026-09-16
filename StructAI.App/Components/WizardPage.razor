@@ -1,0 +1,55 @@
+<!-- E:\work\TQ\Kepler\StructAI\StructAI.App\Components\WizardPage.razor -->
+@using StructAI.Components
+@using StructAI.Services
+
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject WizardEngine Engine
+
+@layout MainLayout
+
+@if (Engine.Definition is null || Engine.Model is null) {
+    <p>Loading wizard...</p>
+} else {
+    <p>@Engine.CurrentStep.Description</p>
+
+    @foreach (var field in Engine.CurrentStep.Fields) {
+        <FieldRenderer Field="field" />
+    }
+
+    @if (ShowNavigation)
+    {
+        <button @onclick="Previous">Back</button>
+        <button @onclick="Next">Next</button>
+    }
+}
+
+@code {
+    [Parameter] public string Id { get; set; } = default!;
+    [Parameter] public bool ShowNavigation { get; set; } = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var metadataPath = $"AppData/metadata/{Id}Wizard.json";
+        var modelPath    = $"AppData/models/{Id}.json";
+
+        await Engine.LoadMetadataAsync(Http, metadataPath);
+        await Engine.LoadModelAsync(Http, modelPath, Id);
+
+        Engine.Compute(Id);
+
+        StateHasChanged();
+    }
+
+    private void Next()
+    {
+        Engine.NextStep();
+        Engine.Compute(Id);
+    }
+
+    private void Previous()
+    {
+        Engine.PreviousStep();
+        Engine.Compute(Id);
+    }
+}
