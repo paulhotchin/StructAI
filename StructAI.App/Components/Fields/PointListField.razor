@@ -2,25 +2,28 @@
 @using StructAI.Wizard
 @using StructAI.Model
 @using System.Text.Json
+@using System.Reflection
+@inject WizardEngine Engine
 
 <div class="field">
     <label>@Field.Label</label>
 
     <div class="point-list">
-        @foreach (var pt in Points)
+        @for (int i = 0; i < Points.Count; i++)
         {
+            var pt = Points[i];
             <div class="point-row">
-                <InputNumber TValue="double" @bind-Value="pt.X" class="form-control" />
-                <InputNumber TValue="double" @bind-Value="pt.Y" class="form-control" />
+                <InputNumber TValue="double" @bind-Value="Points[i].X" class="form-control" />
+                <InputNumber TValue="double" @bind-Value="Points[i].Y" class="form-control" />
 
-                <button class="btn btn-sm btn-danger" @onclick="() => DeletePoint(pt)">
+                <button type="button" class="btn btn-sm btn-danger" @onclick="() => DeletePoint(pt)">
                     Delete
                 </button>
             </div>
         }
     </div>
 
-    <button class="btn btn-sm btn-primary" @onclick="AddPoint">
+    <button type="button" class="btn btn-sm btn-primary" @onclick="AddPoint">
         Add Point
     </button>
 
@@ -34,7 +37,7 @@
     <svg width="400" height="400" style="border:1px solid #ccc;">
         @if (Points.Count > 1)
         {
-            <polyline 
+            <polyline
                 points="@SvgPoints"
                 fill="none"
                 stroke="black"
@@ -48,7 +51,7 @@
     </svg>
 
     <div class="mt-2">
-        <strong>Perimeter:</strong> @Perimeter.ToString("0.00")  
+        <strong>Perimeter:</strong> @Perimeter.ToString("0.00")
         <br />
         <strong>Area:</strong> @Area.ToString("0.00")
     </div>
@@ -56,44 +59,87 @@
 
 @code {
     [Parameter] public WizardField Field { get; set; } = default!;
+    private List<Point> _points = new();
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        // 1. field already has a value
+        var existing = Field.GetValue<List<Point>>();
+        if (existing != null)
+        {
+            _points = existing;
+            return;
+        }
+
+        // 2. hydrate from the model using the field path
+        if (!string.IsNullOrWhiteSpace(Field.Path))
+        {
+            var modelValue = ResolvePath(Engine.Model, Field.Path);
+
+            if (modelValue is List<Point> list)
+            {
+                Field.SetValue(list);
+                _points = list;
+                return;
+            }
+
+            if (modelValue is JsonElement je && je.ValueKind == JsonValueKind.Array)
+            {
+                _points = je.EnumerateArray()
+                    .Select(p => new Point
+                    {
+                        X = p.TryGetProperty("X", out var xEl) && xEl.TryGetDouble(out var x) ? x : 0,
+                        Y = p.TryGetProperty("Y", out var yEl) && yEl.TryGetDouble(out var y) ? y : 0
+                    })
+                    .ToList();
+
+                Field.SetValue(_points);
+                return;
+            }
+        }
+
+        // 3. first-load default
+        _points = new List<Point>();
+        Field.SetValue(_points);
+    }
+
+    private static object? ResolvePath(object? root, string path)
+    {
+        if (root == null || string.IsNullOrWhiteSpace(path))
+            return null;
+
+        object? current = root;
+
+        foreach (var segment in path.Split('.', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (current == null)
+                return null;
+
+            if (current is JsonElement je)
+            {
+                current = JsonSerializer.Deserialize<object>(je.GetRawText());
+            }
+
+            var prop = current.GetType().GetProperty(segment, BindingFlags.Public | BindingFlags.Instance);
+            if (prop == null)
+                return null;
+
+            current = prop.GetValue(current);
+        }
+
+        return current;
+    }
 
     private List<Point> Points
     {
-        get
+        get => _points;
+        set
         {
-            var pts = Field.GetValue<List<Point>>();
-            if (pts == null)
-            {
-                pts = new List<Point>();
-                Field.SetValue(pts);
-            }
-            return pts;
+            _points = value ?? new List<Point>();
+            Field.SetValue(_points);
         }
-        set => Field.SetValue(value);
-    }
-
-    private Point? ConvertToPoint(object? raw)
-    {
-        if (raw == null) return null;
-
-        if (raw is Point p)
-            return p;
-
-        if (raw is JsonElement je)
-        {
-            double x = je.TryGetProperty("X", out var xEl) && xEl.TryGetDouble(out var xv) ? xv : 0;
-            double y = je.TryGetProperty("Y", out var yEl) && yEl.TryGetDouble(out var yv) ? yv : 0;
-            return new Point { X = x, Y = y };
-        }
-
-        if (raw is Dictionary<string, object> dict)
-        {
-            double x = dict.TryGetValue("X", out var xv) ? Convert.ToDouble(xv) : 0;
-            double y = dict.TryGetValue("Y", out var yv) ? Convert.ToDouble(yv) : 0;
-            return new Point { X = x, Y = y };
-        }
-
-        return null;
     }
 
     private string SvgPoints =>
