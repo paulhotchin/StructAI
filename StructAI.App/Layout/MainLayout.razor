@@ -23,6 +23,11 @@
             <!-- Wizard Top Bar -->
             <TopActionBar Title="@CurrentPageTitle" OnSave="Save" />
 
+            @if (_showSavedMessage)
+            {
+                <div class="save-status" role="status">Saved</div>
+            }
+
             <!-- Wizard Scroll Container -->
             <div class="wizard-scroll">
                 @Body
@@ -65,7 +70,8 @@
 </div>
 
 @code {
-    bool isMenuOpen;
+    private bool isMenuOpen;
+    private bool _showSavedMessage;
 
     void ToggleMenu() => isMenuOpen = !isMenuOpen;
 
@@ -81,7 +87,19 @@
         StateHasChanged();
     }
 
-    async Task Save() => await Engine.SaveModelAsync();
+    private async Task Save()
+    {
+        await Engine.SaveModelAsync();
+
+        _showSavedMessage = true;
+        await InvokeAsync(StateHasChanged);
+
+        await Task.Delay(1000);
+
+        _showSavedMessage = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
     void NextStep() => Engine.NextStep();
     void PrevStep() => Engine.PreviousStep();
 

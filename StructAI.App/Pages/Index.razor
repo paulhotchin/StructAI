@@ -19,44 +19,4 @@ else {
     @foreach (var field in Engine.CurrentStep.Fields) {
         <FieldRenderer Field="field" />
     }
-
-    <button type="button" class="btn btn-primary" @onclick="Save">
-        Save
-    </button>
-
-    @if (_saveMessageVisible)
-    {
-        <span class="text-success ms-2">Saved</span>
-    }
-}
-
-@code {
-    private bool _saveMessageVisible;
-
-    private async Task Save()
-    {
-        await Engine.SaveModelAsync();
-
-        _saveMessageVisible = true;
-        await InvokeAsync(StateHasChanged);
-
-        await Task.Delay(1000);
-
-        _saveMessageVisible = false;
-        await InvokeAsync(StateHasChanged);
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            await Engine.LoadMetadataAsync(Http);
-            await Engine.LoadModelAsync(Http);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("CRASH: " + ex.Message);
-            throw;
-        }
-    }
 }

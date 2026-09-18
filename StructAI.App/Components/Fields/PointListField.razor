@@ -1,6 +1,7 @@
 ﻿@* E:\work\TQ\Kepler\StructAI\StructAI.App\Components\Fields\PointListField.razor *@
 @using StructAI.Wizard
 @using StructAI.Model
+@using StructAI.Components.Fields
 @using System.Text.Json
 @using System.Reflection
 @using System.Collections
@@ -12,41 +13,28 @@
 @implements IDisposable
 
 <div class="field">
-    <div class="d-flex align-items-center gap-2">
-        <label class="mb-0">@Field.Label</label>
-
-        @if (!string.IsNullOrWhiteSpace(Field.UI?.Hint))
-        {
-            <button type="button"
-                    class="hint-icon"
-                    aria-label="Show hint"
-                    @onclick="ShowHint">
-                i
-            </button>
-        }
+    <div class="field-label">
+        <label class="field-label-text">@Field.Label</label>
+        <FieldHint Field="Field" />
     </div>
 
     <div class="point-list">
-        @for (int i = 0; i < Points.Count; i++)
+        @foreach (var pt in Points)
         {
-            var pt = Points[i];
-
-            <div class="point-row" style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+            <div class="point-row">
                 <InputNumber TValue="double"
-                            @bind-Value="pt.X"
-                            @onfocus="SelectAllOnFocus"
-                            class="form-control"
-                            style="width:90px; flex:0 0 90px;" />
+                             @bind-Value="pt.X"
+                             @onfocus="SelectAllOnFocus"
+                             class="form-control point-input" />
 
                 <InputNumber TValue="double"
-                            @bind-Value="pt.Y"
-                            @onfocus="SelectAllOnFocus"
-                            class="form-control"
-                            style="width:90px; flex:0 0 90px;" />
+                             @bind-Value="pt.Y"
+                             @onfocus="SelectAllOnFocus"
+                             class="form-control point-input" />
 
                 <button type="button"
                         class="btn btn-sm btn-danger"
-                        disabled="@(_points.Count <= 3)"
+                        disabled="@(Points.Count <= 3)"
                         @onclick="() => DeletePoint(pt)">
                     Delete
                 </button>
@@ -54,51 +42,54 @@
         }
     </div>
 
-    <button type="button" class="btn btn-sm btn-primary" @onclick="AddPoint">
+    <button type="button"
+            class="btn btn-sm btn-primary"
+            @onclick="AddPoint">
         Add Point
     </button>
 
     <hr />
 
-    <svg width="400" height="400" style="border:1px solid #ccc;">
-        @if (Points.Count > 1)
+    <svg viewBox="0 0 400 400"
+         width="400"
+         height="400"
+         style="border:1px solid #ccc;">
+        @if (Points.Count >= 2)
         {
-            <polygon
-                points="@string.Join(" ", Points.Select(p => {
-                    var (sx, sy) = Scale(p);
-                    return $"{sx},{sy}";
-                }))"
-                fill="none"
-                stroke="black"
-                stroke-width="2" />
+            <polygon points="@SvgPoints"
+                     fill="none"
+                     stroke="black"
+                     stroke-width="2" />
 
-            @foreach (var pt in Points)
+            @foreach (var point in Points)
             {
-                var (sx, sy) = Scale(pt);
-                <circle cx="@sx" cy="@sy" r="4" fill="red" />
+                var position = Scale(point);
+
+                <circle cx="@position.x"
+                        cy="@position.y"
+                        r="4"
+                        fill="red" />
             }
         }
 
-        <!-- Real North arrow; 0° is plan-up, positive values are clockwise -->
         <g aria-label="North"
-   transform="@($"rotate({RealNorthDegrees.ToString(CultureInfo.InvariantCulture)} 360 55)")">
+           transform="@($"rotate({RealNorthDegrees.ToString(CultureInfo.InvariantCulture)} 360 55)")">
             <line x1="360" y1="70"
-          x2="360" y2="25"
-          stroke="red"
-          stroke-width="3" />
+                  x2="360" y2="25"
+                  stroke="red"
+                  stroke-width="3" />
 
             <polygon points="360,12 351,30 369,30"
-             fill="red" />
+                     fill="red" />
 
             <text x="360"
-          y="92"
-          text-anchor="middle"
-          fill="red"
-          font-weight="bold">
-        N
-    </text>
-</g>
-
+                  y="92"
+                  text-anchor="middle"
+                  fill="red"
+                  font-weight="bold">
+                N
+            </text>
+        </g>
     </svg>
 
     <div class="mt-2">
@@ -106,68 +97,35 @@
         <br />
         <strong>Area:</strong> @Area.ToString("0.00")
     </div>
-
-    @if (_showHint)
-    {
-        <div class="hint-backdrop" @onclick="HideHint">
-            <div class="hint-modal" @onclick:stopPropagation="true">
-                <button type="button"
-                        class="btn-close float-end"
-                        aria-label="Close"
-                        @onclick="HideHint">
-                </button>
-
-                <h5>@Field.Label</h5>
-                <p>@Field.UI!.Hint</p>
-
-                <button type="button"
-                        class="btn btn-primary"
-                        @onclick="HideHint">
-                    OK
-                </button>
-            </div>
-        </div>
-    }
 </div>
 
 @code {
-    [Parameter] public WizardField Field { get; set; } = default!;
+    [Parameter, EditorRequired]
+    public WizardField Field { get; set; } = default!;
+
     private List<Point> _points = new();
+
+    private List<Point> Points => _points;
+
+    protected override void OnInitialized()
+    {
+        Engine.ModelChanged += OnModelChanged;
+    }
 
     protected override void OnParametersSet()
     {
-        base.OnParametersSet();
-
         var path = Field.Path ?? Field.Bind;
 
-        // Read the value loaded from JSON.
-        // This preserves the JSON value, including an empty list.
         if (!string.IsNullOrWhiteSpace(path) &&
             Engine.TryResolvePath<List<Point>>(path, out var modelPoints) &&
             modelPoints is not null)
         {
             _points = modelPoints;
-            Field.SetValue(_points);
             return;
         }
 
-        // Fallback if the model path is unavailable.
-        var existing = Field.GetValue<List<Point>>();
-
-        if (existing is not null)
-        {
-            _points = existing;
-            return;
-        }
-
-        // Initialize only when no model or field value exists.
-        _points = new List<Point>();
+        _points = Field.GetValue<List<Point>>() ?? new List<Point>();
         Field.SetValue(_points);
-    }
-
-    protected override void OnInitialized()
-    {
-        Engine.ModelChanged += OnModelChanged;
     }
 
     private void OnModelChanged()
@@ -175,172 +133,10 @@
         _ = InvokeAsync(StateHasChanged);
     }
 
-    public void Dispose()
-    {
-        Engine.ModelChanged -= OnModelChanged;
-    }
-
-    private static List<Point> ConvertToPointList(object? value)
-    {
-        if (value == null)
-            return new List<Point>();
-
-        if (value is List<Point> list)
-            return list;
-
-        if (value is IEnumerable enumerable && value is not string)
-        {
-            var points = new List<Point>();
-
-            foreach (var item in enumerable)
-            {
-                var p = ConvertToPoint(item);
-                if (p != null)
-                    points.Add(p);
-            }
-
-            return points;
-        }
-
-        if (value is JsonElement je && je.ValueKind == JsonValueKind.Array)
-        {
-            var points = new List<Point>();
-
-            foreach (var item in je.EnumerateArray())
-            {
-                var p = ConvertToPoint(item);
-                if (p != null)
-                    points.Add(p);
-            }
-
-            return points;
-        }
-
-        var single = ConvertToPoint(value);
-        return single == null ? new List<Point>() : new List<Point> { single };
-    }
-
-    private static Point? ConvertToPoint(object? raw)
-    {
-        if (raw == null) return null;
-
-        if (raw is Point p)
-            return p;
-
-        if (raw is JsonElement je)
-        {
-            double x = 0;
-            double y = 0;
-
-            if (je.TryGetProperty("X", out var xEl) && xEl.TryGetDouble(out var xv))
-                x = xv;
-            else if (je.TryGetProperty("x", out var xEl2) && xEl2.TryGetDouble(out var xv2))
-                x = xv2;
-
-            if (je.TryGetProperty("Y", out var yEl) && yEl.TryGetDouble(out var yv))
-                y = yv;
-            else if (je.TryGetProperty("y", out var yEl2) && yEl2.TryGetDouble(out var yv2))
-                y = yv2;
-
-            return new Point { X = x, Y = y };
-        }
-
-        if (raw is Dictionary<string, object> dict)
-        {
-            double x = dict.TryGetValue("X", out var xv) ? Convert.ToDouble(xv) :
-                       dict.TryGetValue("x", out var xv2) ? Convert.ToDouble(xv2) : 0;
-
-            double y = dict.TryGetValue("Y", out var yv) ? Convert.ToDouble(yv) :
-                       dict.TryGetValue("y", out var yv2) ? Convert.ToDouble(yv2) : 0;
-
-            return new Point { X = x, Y = y };
-        }
-
-        var props = raw.GetType().GetProperties();
-
-        var xProp = props.FirstOrDefault(p => string.Equals(p.Name, "X", StringComparison.OrdinalIgnoreCase));
-        var yProp = props.FirstOrDefault(p => string.Equals(p.Name, "Y", StringComparison.OrdinalIgnoreCase));
-
-        if (xProp != null && yProp != null)
-        {
-            var xVal = xProp.GetValue(raw);
-            var yVal = yProp.GetValue(raw);
-
-            if (xVal != null && yVal != null)
-            {
-                return new Point
-                {
-                    X = Convert.ToDouble(xVal),
-                    Y = Convert.ToDouble(yVal)
-                };
-            }
-        }
-
-        return null;
-    }
-
-    private static object? ResolvePath(object? root, string path)
-    {
-        if (root == null || string.IsNullOrWhiteSpace(path))
-            return null;
-
-        object? current = root;
-
-        foreach (var segment in path.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-        {
-            if (current == null)
-                return null;
-
-            if (current is JsonElement je)
-            {
-                current = JsonSerializer.Deserialize<object>(je.GetRawText());
-            }
-
-            if (current is IEnumerable enumerable && int.TryParse(segment, out var index))
-            {
-                int i = 0;
-                foreach (var item in enumerable)
-                {
-                    if (i++ == index)
-                    {
-                        current = item;
-                        break;
-                    }
-                }
-                continue;
-            }
-
-            var prop = current!
-                .GetType()
-                .GetProperty(segment, BindingFlags.Public | BindingFlags.Instance);
-
-            if (prop == null)
-                return null;
-
-            current = prop.GetValue(current);
-        }
-
-        return current;
-    }
-
-    private List<Point> Points
-    {
-        get => _points;
-        set
-        {
-            _points = value ?? new List<Point>();
-            Field.SetValue(_points);
-        }
-    }
-
-    private string SvgPoints =>
-        string.Join(" ", Points.Select(p => $"{p.X},{p.Y}"));
-
     private void AddPoint()
     {
-        Points.Add(new Point { X = 0, Y = 0 });
-        Field.SetValue(Points);
-        InvokeAsync(StateHasChanged);
+        _points.Add(new Point());
+        UpdateModel();
     }
 
     private void DeletePoint(Point point)
@@ -349,86 +145,19 @@
             return;
 
         _points.Remove(point);
+        UpdateModel();
+    }
+
+    private void UpdateModel()
+    {
+        var path = Field.Path ?? Field.Bind;
+
         Field.SetValue(_points);
-        Engine.TrySetPath(Field.Path ?? Field.Bind ?? string.Empty, _points);
+
+        if (!string.IsNullOrWhiteSpace(path))
+            Engine.TrySetPath(path, _points);
+
         Engine.NotifyModelChanged();
-    }
-
-    private double Perimeter => ComputePerimeter(Points);
-    private double Area => ComputeArea(Points);
-
-    private double ComputePerimeter(List<Point> pts)
-    {
-        if (pts.Count < 2) return 0;
-
-        double sum = 0;
-        for (int i = 0; i < pts.Count; i++)
-        {
-            var a = pts[i];
-            var b = pts[(i + 1) % pts.Count];
-            sum += Math.Sqrt(Math.Pow(b.X - a.X, 2) + Math.Pow(b.Y - a.Y, 2));
-        }
-        return sum;
-    }
-
-    private double ComputeArea(List<Point> pts)
-    {
-        if (pts.Count < 3) return 0;
-
-        double sum = 0;
-        for (int i = 0; i < pts.Count; i++)
-        {
-            var a = pts[i];
-            var b = pts[(i + 1) % pts.Count];
-            sum += (a.X * b.Y) - (a.Y * b.X);
-        }
-        return Math.Abs(sum) / 2.0;
-    }
-
-    private (double sx, double sy) Scale(Point p)
-    {
-        var minX = Points.Min(pt => pt.X);
-        var maxX = Points.Max(pt => pt.X);
-        var minY = Points.Min(pt => pt.Y);
-        var maxY = Points.Max(pt => pt.Y);
-
-        var spanX = maxX - minX;
-        var spanY = maxY - minY;
-
-        if (spanX == 0) spanX = 1;
-        if (spanY == 0) spanY = 1;
-
-        const double size = 380.0;   // drawing area
-        const double offset = 10.0;  // margin
-
-        // aspect‑ratio preserved scale
-        var span = Math.Max(spanX, spanY);
-
-        // normalized 0–1
-        var nx = (p.X - minX) / span;
-        var ny = (p.Y - minY) / span;
-
-        // center inside the box
-        var dx = (size - (spanX / span) * size) / 2;
-        var dy = (size - (spanY / span) * size) / 2;
-
-        // flip Y so “up” is positive
-        var sx = offset + dx + nx * size;
-        var sy = offset + dy + (1 - ny) * size;
-
-        return (sx, sy);
-    }
-
-    private double RealNorthDegrees
-    {
-        get
-        {
-            return Engine.TryResolvePath<double>(
-                "Site.RealNorthDegrees",
-                out var degrees)
-                ? degrees
-                : 0;
-        }
     }
 
     private async Task SelectAllOnFocus()
@@ -436,15 +165,91 @@
         await JS.InvokeVoidAsync("structAI.selectOnCoarsePointer");
     }
 
-    private bool _showHint;
+    private string SvgPoints =>
+        string.Join(" ", Points.Select(point =>
+        {
+            var position = Scale(point);
 
-    private void ShowHint()
+            return $"{position.x.ToString(CultureInfo.InvariantCulture)}," +
+                   $"{position.y.ToString(CultureInfo.InvariantCulture)}";
+        }));
+
+    private (double x, double y) Scale(Point point)
     {
-        _showHint = true;
+        if (Points.Count == 0)
+            return (200, 200);
+
+        const double svgSize = 400;
+        const double padding = 20;
+        var drawableSize = svgSize - (padding * 2);
+
+        var minX = Points.Min(p => p.X);
+        var maxX = Points.Max(p => p.X);
+        var minY = Points.Min(p => p.Y);
+        var maxY = Points.Max(p => p.Y);
+
+        var width = Math.Max(maxX - minX, 1);
+        var height = Math.Max(maxY - minY, 1);
+        var scale = Math.Min(drawableSize / width, drawableSize / height);
+
+        var drawnWidth = width * scale;
+        var drawnHeight = height * scale;
+
+        var offsetX = (svgSize - drawnWidth) / 2;
+        var offsetY = (svgSize - drawnHeight) / 2;
+
+        return (
+            offsetX + ((point.X - minX) * scale),
+            svgSize - offsetY - ((point.Y - minY) * scale)
+        );
     }
 
-    private void HideHint()
+    private double RealNorthDegrees =>
+        Engine.TryResolvePath<double>(
+            "Site.RealNorthDegrees",
+            out var degrees)
+                ? degrees
+                : 0;
+
+    private double Perimeter => ComputePerimeter();
+    private double Area => ComputeArea();
+
+    private double ComputePerimeter()
     {
-        _showHint = false;
+        if (Points.Count < 2)
+            return 0;
+
+        return Points
+            .Select((point, index) =>
+            {
+                var next = Points[(index + 1) % Points.Count];
+                return Math.Sqrt(
+                    Math.Pow(next.X - point.X, 2) +
+                    Math.Pow(next.Y - point.Y, 2));
+            })
+            .Sum();
+    }
+
+    private double ComputeArea()
+    {
+        if (Points.Count < 3)
+            return 0;
+
+        var total = 0d;
+
+        for (var i = 0; i < Points.Count; i++)
+        {
+            var current = Points[i];
+            var next = Points[(i + 1) % Points.Count];
+
+            total += current.X * next.Y - next.X * current.Y;
+        }
+
+        return Math.Abs(total) / 2;
+    }
+
+    public void Dispose()
+    {
+        Engine.ModelChanged -= OnModelChanged;
     }
 }

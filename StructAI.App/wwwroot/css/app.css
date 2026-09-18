@@ -233,3 +233,33 @@ button:active,
     line-height: 1;
     cursor: pointer;
 }
+
+.save-status {
+    position: absolute;
+    top: 3.5rem;
+    right: 1rem;
+    z-index: 10;
+    padding: 0.25rem 0.75rem;
+    color: #146c43;
+    background: #d1e7dd;
+    border: 1px solid #a3cfbb;
+    border-radius: 0.25rem;
+}
+
+.point-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.point-input {
+    width: 90px !important;
+    max-width: 90px;
+    flex: 0 0 90px;
+}
+
+.point-row .btn {
+    flex: 0 0 auto;
+}
