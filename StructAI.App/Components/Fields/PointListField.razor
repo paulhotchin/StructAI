@@ -50,47 +50,48 @@
 
     <hr />
 
-    <svg viewBox="0 0 400 400"
-         width="400"
-         height="400"
-         style="border:1px solid #ccc;">
-        @if (Points.Count >= 2)
-        {
-            <polygon points="@SvgPoints"
-                     fill="none"
-                     stroke="black"
-                     stroke-width="2" />
-
-            @foreach (var point in Points)
+    <div class="svg-container">
+        <svg class="point-svg"
+            viewBox="0 0 400 400"
+            preserveAspectRatio="xMidYMid meet">
+            @if (Points.Count >= 2)
             {
-                var position = Scale(point);
+                <polygon points="@SvgPoints"
+                        fill="none"
+                        stroke="black"
+                        stroke-width="2" />
 
-                <circle cx="@position.x"
-                        cy="@position.y"
-                        r="4"
-                        fill="red" />
+                @foreach (var point in Points)
+                {
+                    var position = Scale(point);
+
+                    <circle cx="@position.x"
+                            cy="@position.y"
+                            r="4"
+                            fill="red" />
+                }
             }
-        }
 
-        <g aria-label="North"
-           transform="@($"rotate({RealNorthDegrees.ToString(CultureInfo.InvariantCulture)} 360 55)")">
-            <line x1="360" y1="70"
-                  x2="360" y2="25"
-                  stroke="red"
-                  stroke-width="3" />
+            <g aria-label="North"
+            transform="@($"rotate({RealNorthDegrees.ToString(CultureInfo.InvariantCulture)} 360 55)")">
+                <line x1="360" y1="70"
+                    x2="360" y2="25"
+                    stroke="red"
+                    stroke-width="3" />
 
-            <polygon points="360,12 351,30 369,30"
-                     fill="red" />
+                <polygon points="360,12 351,30 369,30"
+                        fill="red" />
 
-            <text x="360"
-                  y="92"
-                  text-anchor="middle"
-                  fill="red"
-                  font-weight="bold">
-                N
-            </text>
-        </g>
-    </svg>
+                <text x="360"
+                    y="92"
+                    text-anchor="middle"
+                    fill="red"
+                    font-weight="bold">
+                    N
+                </text>
+            </g>
+        </svg>
+    </div>
 
     <div class="mt-2">
         <strong>Perimeter:</strong> @Perimeter.ToString("0.00")
