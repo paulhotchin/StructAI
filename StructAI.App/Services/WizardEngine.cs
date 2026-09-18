@@ -50,15 +50,29 @@ public class WizardEngine
 
     public async Task LoadModelAsync(HttpClient http, string modelPath)
     {
-        var json = await http.GetStringAsync(modelPath);
+        var savedJson = await _js.InvokeAsync<string?>(
+            "structAI.load",
+            "WizardModel");
 
-        // Auto-detect model type based on filename
-        if (modelPath.Contains("GroundFloor"))
+        var json = string.IsNullOrWhiteSpace(savedJson)
+            ? await http.GetStringAsync(modelPath)
+            : savedJson;
+
+        if (modelPath.Contains("GroundFloor", StringComparison.OrdinalIgnoreCase))
+        {
             Model = JsonSerializer.Deserialize<GroundFloor>(json, _jsonOptions);
-        else if (modelPath.Contains("CeoValueTime"))
+        }
+        else if (modelPath.Contains("CeoValueTime", StringComparison.OrdinalIgnoreCase))
+        {
             Model = JsonSerializer.Deserialize<CeoValueTime>(json, _jsonOptions);
+        }
         else
+        {
             Model = JsonSerializer.Deserialize<object>(json, _jsonOptions);
+        }
+
+        if (Model is null)
+            throw new InvalidOperationException("WizardEngine: failed to load model.");
     }
 
     // ------------------------------------------------------------
@@ -126,6 +140,36 @@ public class WizardEngine
 
         throw new InvalidOperationException(
             $"Resolved value for path '{path}' is not of type '{typeof(T).Name}'.");
+    }
+
+    public bool TryResolvePath<T>(string path, out T? value)
+    {
+        value = default;
+
+        if (Model is null || string.IsNullOrWhiteSpace(path))
+            return false;
+
+        object? current = Model;
+
+        foreach (var part in path.Split('.', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var property = current?.GetType().GetProperty(part);
+            if (property == null)
+                return false;
+
+            current = property.GetValue(current);
+
+            if (current == null)
+                return false;
+        }
+
+        if (current is T typed)
+        {
+            value = typed;
+            return true;
+        }
+
+        return false;
     }
 
     // ------------------------------------------------------------
@@ -202,5 +246,39 @@ public class WizardEngine
 
         ceo.AnnualLoss =
             ceo.TotalWeeklyLoss * 52;
+    }
+
+    public bool TrySetPath<T>(string path, T value)
+    {
+        if (Model is null || string.IsNullOrWhiteSpace(path))
+            return false;
+
+        object current = Model;
+        var parts = path.Split('.', StringSplitOptions.RemoveEmptyEntries);
+
+        for (int i = 0; i < parts.Length - 1; i++)
+        {
+            var property = current.GetType().GetProperty(parts[i]);
+
+            if (property?.GetValue(current) is not object next)
+                return false;
+
+            current = next;
+        }
+
+        var targetProperty = current.GetType().GetProperty(parts[^1]);
+
+        if (targetProperty is null || !targetProperty.CanWrite)
+            return false;
+
+        targetProperty.SetValue(current, value);
+        return true;
+    }
+
+    public event Action? ModelChanged;
+
+    public void NotifyModelChanged()
+    {
+        ModelChanged?.Invoke();
     }
 }

@@ -1,15 +1,14 @@
 ﻿@using StructAI.Wizard
 
 <div class="field">
-    <label>
-        <InputCheckbox @bind-Value="value" />
-        @Field.Label
-    </label>
+    <div class="field-label">
+        <label class="field-label-text">
+            <InputCheckbox @bind-Value="value" />
+            @Field.Label
+        </label>
 
-    @if (!string.IsNullOrWhiteSpace(Field.UI?.Hint))
-    {
-        <small class="text-muted">@Field.UI.Hint</small>
-    }
+        <FieldHint Field="Field" />
+    </div>
 </div>
 
 @code {

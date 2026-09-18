@@ -1,5 +1,6 @@
 ﻿// E:\work\TQ\Kepler\StructAI\StructAI.App\Wizard\WizardDefinition.cs
 using StructAI.Services;
+using System.Text.Json;
 
 namespace StructAI.Wizard;
 
@@ -28,16 +29,26 @@ public class WizardField
     public string Name { get; set; } = "";
     public string Label { get; set; } = "";
     public string Type { get; set; } = "";
-    public string? Bind { get; set; }   // nullable
+
+    // This is the property already used by the wizard metadata.
+    public string? Bind { get; set; }
+
+    // Compatibility alias: some components expect Path.
+    // Keep both in sync.
+    public string? Path
+    {
+        get => Bind;
+        set => Bind = value;
+    }
+
     public FieldUI? UI { get; set; }
     public List<FieldOption>? Options { get; set; }
     public FieldValidation? Validation { get; set; }
 
-    public WizardEngine? Engine { get; set; }   // nullable
+    public WizardEngine? Engine { get; set; }
 
-    // ------------------------------------------------------------
-    // SAFE GET VALUE
-    // ------------------------------------------------------------
+    public JsonElement? Default { get; set; }
+    
     public T? GetValue<T>()
     {
         if (Engine == null || string.IsNullOrWhiteSpace(Bind))
@@ -53,16 +64,13 @@ public class WizardField
         }
     }
 
-    // ------------------------------------------------------------
-    // SAFE SET VALUE
-    // ------------------------------------------------------------
     public void SetValue(object? value)
     {
         if (Engine == null || string.IsNullOrWhiteSpace(Bind))
             return;
 
         var parts = Bind.Split('.', StringSplitOptions.RemoveEmptyEntries);
-        object? current = Engine.Model;   // FIXED: nullable
+        object? current = Engine.Model;
 
         if (current == null)
             return;
@@ -75,7 +83,7 @@ public class WizardField
                 if (prop == null)
                     return;
 
-                current = prop.GetValue(current);   // FIXED: nullable assignment
+                current = prop.GetValue(current);
                 if (current == null)
                     return;
             }
@@ -89,7 +97,7 @@ public class WizardField
         }
         catch
         {
-            // swallow errors — invalid Bind path
+            // swallow errors
         }
     }
 }

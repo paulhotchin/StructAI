@@ -1,0 +1,42 @@
+@* E:\work\TQ\Kepler\StructAI\StructAI.App\Components\Fields\FieldHint.razor *@
+@using StructAI.Wizard
+
+@if (!string.IsNullOrWhiteSpace(Field.UI?.Hint))
+{
+    <button type="button"
+            class="hint-icon"
+            aria-label="Show hint"
+            @onclick="Show">
+        i
+    </button>
+}
+
+@if (_visible)
+{
+    <div class="hint-backdrop" @onclick="Hide">
+        <div class="hint-modal" @onclick:stopPropagation="true">
+            <button type="button"
+                    class="btn-close float-end"
+                    aria-label="Close"
+                    @onclick="Hide">
+            </button>
+
+            <h5>@Field.Label</h5>
+            <p>@Field.UI!.Hint</p>
+
+            <button type="button" class="btn btn-primary" @onclick="Hide">
+                OK
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public WizardField Field { get; set; } = default!;
+
+    private bool _visible;
+
+    private void Show() => _visible = true;
+    private void Hide() => _visible = false;
+}

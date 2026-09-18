@@ -8,15 +8,7 @@ public class GroundFloor {
 
 public class Site {
     public double RealNorthDegrees { get; set; }
-
-    // Default boundary polygon (restored)
-    public List<Point> Boundary { get; set; } = new()
-    {
-        new Point { X = 0, Y = 0 },
-        new Point { X = 14000, Y = 0 },
-        // new Point { X = 14000, Y = 9500 },
-        new Point { X = 0, Y = 9500 }
-    };
+    public List<Point> Boundary { get; set; } = new();
 
     // Computed fields
     public double BoundaryPerimeter { get; set; }

@@ -1,0 +1,23 @@
+{
+  "dotnet.defaultSolution": "",
+  "dotnet.server.launchBrowser": true,
+  "dotnet.server.autoDetect": true,
+
+  "debug.internalConsoleOptions": "neverOpen",
+  "debug.allowBreakpointsEverywhere": true,
+
+  "csharp.suppressDotnetRestoreNotification": true,
+  "csharp.suppressDotnetBuildNotification": true,
+
+  "csharp.debug.defaultLaunchConfiguration": "coreclr",
+
+  "blazor.debug.enabled": false,
+
+  "files.exclude": {
+    "**/bin": true,
+    "**/obj": true
+  },
+
+  "editor.formatOnSave": true,
+  "editor.formatOnType": true
+}

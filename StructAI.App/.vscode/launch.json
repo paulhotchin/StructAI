@@ -1,13 +1,22 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Blazor WebAssembly Debug",
-            "type": "blazorwasm",
-            "request": "launch",
-            "program": "dotnet",
-            "cwd": "${workspaceFolder}",
-            "browser": "edge",
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "StructAI",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/bin/Debug/net8.0/StructAI.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  ]
 }

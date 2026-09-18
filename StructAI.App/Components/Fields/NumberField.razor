@@ -1,53 +1,69 @@
-﻿@using StructAI.Wizard
+﻿@* E:\work\TQ\Kepler\StructAI\StructAI.App\Components\Fields\NumberField.razor *@
+@using StructAI.Wizard
+@using StructAI.Services
 @using System.Text.Json
+@inject WizardEngine Engine
 
 <div class="field">
-    <label>@Field.Label</label>
+    <div class="field-label">
+        <label class="field-label-text">@Field.Label</label>
+        <FieldHint Field="Field" />
 
-    <InputNumber TValue="double" @bind-Value="value" class="form-control" />
-
-    @if (!string.IsNullOrWhiteSpace(Field.UI?.Hint))
-    {
-        <small class="text-muted">@Field.UI.Hint</small>
-    }
+        <InputNumber TValue="double"
+                     @bind-Value="Value"
+                     class="form-control"
+                     style="width:90px; flex:0 0 90px;" />
+    </div>
 </div>
 
 @code {
-    [Parameter] public WizardField Field { get; set; } = default!;
+    [Parameter, EditorRequired]
+    public WizardField Field { get; set; } = default!;
 
-    private double value
+    private double Value
     {
-        get => ReadNumericValue();
-        set => Field.SetValue(value);
+        get
+        {
+            var path = Field.Path ?? Field.Bind;
+
+            if (!string.IsNullOrWhiteSpace(path) &&
+                Engine.TryResolvePath<double>(path, out var modelValue))
+            {
+                return modelValue;
+            }
+
+            return ReadFieldValue();
+        }
+        set
+        {
+            Field.SetValue(value);
+
+            var path = Field.Path ?? Field.Bind;
+
+            if (!string.IsNullOrWhiteSpace(path) &&
+                Engine.TrySetPath(path, value))
+            {
+                Engine.NotifyModelChanged();
+            }
+        }
     }
 
-    private double ReadNumericValue()
+    private double ReadFieldValue()
     {
-        object? raw = Field.GetValue<object>();
+        var raw = Field.GetValue<object>();
 
-        if (raw == null)
-            return 0;
+        if (raw is double number)
+            return number;
 
-        if (raw is double d)
-            return d;
-
-        if (raw is IConvertible conv)
-            return Convert.ToDouble(conv);
-
-        if (raw is JsonElement je)
+        if (raw is JsonElement json &&
+            json.ValueKind == JsonValueKind.Number &&
+            json.TryGetDouble(out var value))
         {
-            if (je.ValueKind == JsonValueKind.Number && je.TryGetDouble(out double jd))
-                return jd;
-
-            if (je.ValueKind == JsonValueKind.String && double.TryParse(je.GetString(), out double js))
-                return js;
-
-            return 0;
+            return value;
         }
 
-        if (raw is string s && double.TryParse(s, out double parsed))
-            return parsed;
-
-        return 0;
+        return raw is IConvertible convertible
+            ? Convert.ToDouble(convertible)
+            : 0;
     }
 }

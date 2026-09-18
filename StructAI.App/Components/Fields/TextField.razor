@@ -1,14 +1,12 @@
 ﻿@using StructAI.Wizard
 
 <div class="field">
-    <label>@Field.Label</label>
+    <div class="field-label">
+        <label class="field-label-text">@Field.Label</label>
+        <FieldHint Field="Field" />
+    </div>
 
     <InputText @bind-Value="value" class="form-control" />
-
-    @if (!string.IsNullOrWhiteSpace(Field.UI?.Hint))
-    {
-        <small class="text-muted">@Field.UI.Hint</small>
-    }
 </div>
 
 @code {

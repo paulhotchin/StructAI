@@ -2,7 +2,7 @@
 @page "/"
 
 @using StructAI.Components
-@using StructAI.Services 
+@using StructAI.Services
 
 @inject HttpClient Http
 @inject NavigationManager Nav
@@ -12,42 +12,51 @@
 
 @if (Engine.Definition is null || Engine.Model is null) {
     <p>Loading wizard...</p>
-} else {
+}
+else {
     <p>@Engine.CurrentStep.Description</p>
 
     @foreach (var field in Engine.CurrentStep.Fields) {
         <FieldRenderer Field="field" />
     }
-    @* <button @onclick="Save">Save</button>
-    <button @onclick="Engine.PreviousStep">Back</button>
-    <button @onclick="Engine.NextStep">Next</button> *@
+
+    <button type="button" class="btn btn-primary" @onclick="Save">
+        Save
+    </button>
+
+    @if (_saveMessageVisible)
+    {
+        <span class="text-success ms-2">Saved</span>
+    }
 }
 
 @code {
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            try
-            {
-                await Engine.LoadMetadataAsync(Http);
-                await Engine.LoadModelAsync(Http);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("CRASH: " + ex.Message);
-                throw;
-            }
+    private bool _saveMessageVisible;
 
-            StateHasChanged();
-        }
+    private async Task Save()
+    {
+        await Engine.SaveModelAsync();
+
+        _saveMessageVisible = true;
+        await InvokeAsync(StateHasChanged);
+
+        await Task.Delay(1000);
+
+        _saveMessageVisible = false;
+        await InvokeAsync(StateHasChanged);
     }
 
     protected override async Task OnInitializedAsync()
     {
-        await Engine.LoadMetadataAsync(Http);
-        await Engine.LoadModelAsync(Http);
-
-        StateHasChanged(); // force re-render
+        try
+        {
+            await Engine.LoadMetadataAsync(Http);
+            await Engine.LoadModelAsync(Http);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("CRASH: " + ex.Message);
+            throw;
+        }
     }
 }
