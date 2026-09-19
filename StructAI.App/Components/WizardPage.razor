@@ -7,26 +7,39 @@
 @inject WizardEngine Engine
 
 @layout MainLayout
+@implements IDisposable
 
 @if (Engine.Definition is null || Engine.Model is null) {
     <p>Loading wizard...</p>
 } else {
     <p>@Engine.CurrentStep.Description</p>
 
-    @foreach (var field in Engine.CurrentStep.Fields) {
-        <FieldRenderer Field="field" />
+        @if (Id == "CeoValueTime" &&
+            string.Equals(Engine.CurrentStep.Id, "Results", StringComparison.OrdinalIgnoreCase))
+    {
+        <CeoValueTimeResults />
+    }
+    else
+    {
+        @foreach (var field in Engine.CurrentStep.Fields) {
+            <FieldRenderer Field="field" />
+        }
     }
 
-    @if (ShowNavigation)
-    {
-        <button @onclick="Previous">Back</button>
-        <button @onclick="Next">Next</button>
-    }
 }
 
 @code {
     [Parameter] public string Id { get; set; } = default!;
-    [Parameter] public bool ShowNavigation { get; set; } = true;
+
+    protected override void OnInitialized()
+    {
+        Engine.ModelChanged += OnModelChanged;
+    }
+
+    private void OnModelChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -41,15 +54,8 @@
         StateHasChanged();
     }
 
-    private void Next()
+    public void Dispose()
     {
-        Engine.NextStep();
-        Engine.Compute(Id);
-    }
-
-    private void Previous()
-    {
-        Engine.PreviousStep();
-        Engine.Compute(Id);
+        Engine.ModelChanged -= OnModelChanged;
     }
 }

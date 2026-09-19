@@ -1,8 +1,8 @@
 ﻿<!-- E:\work\TQ\Kepler\StructAI\StructAI.App\Layout\MainLayout.razor -->
 @inherits LayoutComponentBase
+@implements IDisposable
 @inject NavigationManager Nav
 @inject WizardEngine Engine
-@inject HttpClient Http
 
 <!-- DESKTOP TITLE BAR -->
 <div class="desktop-title-bar">
@@ -73,19 +73,27 @@
     private bool isMenuOpen;
     private bool _showSavedMessage;
 
+    protected override void OnInitialized()
+    {
+        Engine.ModelChanged += OnEngineChanged;
+    }
+
+    private void OnEngineChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Engine.ModelChanged -= OnEngineChanged;
+    }
+
     void ToggleMenu() => isMenuOpen = !isMenuOpen;
 
     string CurrentPageTitle =>
         Engine?.Definition?.Steps == null || Engine.Definition.Steps.Count == 0
             ? "Loading..."
             : Engine.CurrentStep?.Name ?? "Untitled";
-
-    protected override async Task OnInitializedAsync()
-    {
-        await Engine.LoadMetadataAsync(Http);
-        await Engine.LoadModelAsync(Http);
-        StateHasChanged();
-    }
 
     private async Task Save()
     {
@@ -104,5 +112,6 @@
     void PrevStep() => Engine.PreviousStep();
 
     private bool IsWizardPage =>
-        Engine?.Definition?.Steps?.Count > 0;
+        Nav.ToBaseRelativePath(Nav.Uri).TrimEnd('/').ToLowerInvariant() is
+            "site-geometry" or "ceo-value-time";
 }

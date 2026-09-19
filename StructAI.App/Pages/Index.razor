@@ -1,22 +1,6 @@
 ﻿@* E:\work\TQ\Kepler\StructAI\StructAI.App\Pages\Index.razor *@
-@page "/"
+@page "/site-geometry"
 
 @using StructAI.Components
-@using StructAI.Services
 
-@inject HttpClient Http
-@inject NavigationManager Nav
-@inject WizardEngine Engine
-
-@layout MainLayout
-
-@if (Engine.Definition is null || Engine.Model is null) {
-    <p>Loading wizard...</p>
-}
-else {
-    <p>@Engine.CurrentStep.Description</p>
-
-    @foreach (var field in Engine.CurrentStep.Fields) {
-        <FieldRenderer Field="field" />
-    }
-}
+<WizardPage Id="GroundFloor" />

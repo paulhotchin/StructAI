@@ -171,13 +171,21 @@ public class WizardEngine
     public void NextStep()
     {
         if (!IsLastStep)
+        {
             CurrentStepIndex++;
+            Compute(_wizardId);
+            NotifyModelChanged();
+        }
     }
 
     public void PreviousStep()
     {
         if (!IsFirstStep)
+        {
             CurrentStepIndex--;
+            Compute(_wizardId);
+            NotifyModelChanged();
+        }
     }
 
     public T ResolvePath<T>(string path)

@@ -1,0 +1,66 @@
+@using StructAI.Model
+@using StructAI.Services
+@using System.Globalization
+
+@inject WizardEngine Engine
+
+@if (Engine.Model is CeoValueTime ceo)
+{
+    var revenues = new[]
+    {
+        100_000d,
+        250_000d,
+        500_000d,
+        750_000d,
+        1_000_000d,
+        1_500_000d,
+        2_000_000d,
+        2_500_000d,
+        3_000_000d,
+        5_000_000d,
+        10_000_000d,
+        15_000_000d,
+        20_000_000d,
+        25_000_000d
+    };
+
+    var weeks = Math.Max(ceo.WeeksPerYear, 1);
+    var hours = Math.Max(ceo.HoursPerWeek, 1);
+    var growthMultiplier = 1 + (ceo.AnnualGrowthPercent / 100);
+
+    <table class="table table-bordered ceo-results-table">
+        <thead>
+            <tr>
+                <th scope="col" rowspan="2">Business Revenue</th>
+                <th scope="col" colspan="2">Weekly Worth of Time</th>
+                <th scope="col" colspan="2">Hourly Worth of Time</th>
+            </tr>
+            <tr>
+                <th scope="col">Current</th>
+                <th scope="col">Growth @ceo.AnnualGrowthPercent.ToString("0.##")%</th>
+                <th scope="col">Current</th>
+                <th scope="col">Growth @ceo.AnnualGrowthPercent.ToString("0.##")%</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var revenue in revenues)
+            {
+                var weekly = revenue / weeks;
+                var hourly = weekly / hours;
+
+                <tr>
+                    <th scope="row">@FormatCurrency(revenue)</th>
+                    <td>@FormatCurrency(weekly)</td>
+                    <td>@FormatCurrency(weekly * growthMultiplier)</td>
+                    <td>@FormatCurrency(hourly)</td>
+                    <td>@FormatCurrency(hourly * growthMultiplier)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private static string FormatCurrency(double value) =>
+        value.ToString("$#,##0", CultureInfo.InvariantCulture);
+}

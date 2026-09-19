@@ -19,7 +19,13 @@ public class WizardDefinition
 
 public class WizardStep
 {
+    public string? Id { get; set; }
     public string? Name { get; set; }
+    public string? Title
+    {
+        get => Name;
+        set => Name = value;
+    }
     public string? Description { get; set; }
     public List<WizardField> Fields { get; set; } = new();
 }
