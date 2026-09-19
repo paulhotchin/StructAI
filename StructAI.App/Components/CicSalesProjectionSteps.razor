@@ -1,0 +1,79 @@
+@using StructAI.Components
+@using StructAI.Model
+@using StructAI.Services
+@using System.Globalization
+
+@inject WizardEngine Engine
+
+@if (Engine.Model is CicSalesProjection cic)
+{
+    @if (Engine.CurrentStep.Id == "PriceList")
+    {
+        <div class="cic-inputs">
+            @foreach (var field in Engine.CurrentStep.Fields)
+            {
+                <FieldRenderer Field="field" />
+            }
+        </div>
+
+        <table class="table table-bordered cic-table">
+            <thead>
+                <tr>
+                    <th>Offer</th>
+                    <th>Per week</th>
+                    <th>Per month</th>
+                    <th>Per year</th>
+                    <th>Revenue p.a.</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var offer in PriceRows(cic))
+                {
+                    <tr>
+                        <th>@offer.Label</th>
+                        <td>@offer.Weekly</td>
+                        <td>@offer.Monthly</td>
+                        <td>@offer.Annual</td>
+                        <td>@FormatCurrency(offer.Revenue)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else if (Engine.CurrentStep.Id == "CoachingContractOnly")
+    {
+        <CicCashflowTable Title="Coaching Contract Only" MonthlyValues="@CoachingMonthlyValues(cic.MonthlyCoachingPrice)" />
+    }
+    else if (Engine.CurrentStep.Id == "AI")
+    {
+        <CicCashflowTable Title="In-House Unlimited Client Account with AI" MonthlyValues="@AiMonthlyValues(cic.InHouseAiMonthlyPrice)" />
+    }
+}
+
+@code {
+    private sealed record PriceRow(string Label, string Weekly, string Monthly, string Annual, double Revenue);
+
+    private static IEnumerable<PriceRow> PriceRows(CicSalesProjection cic) => new[]
+    {
+        new PriceRow("Assessments sold", "1", "4", "48", cic.AssessmentPrice * 48),
+        new PriceRow("Debrief", "1", "4", "48", cic.DebriefPrice * 48),
+        new PriceRow("ADVs & Debriefs", "1", "4", "48", cic.AdvDebriefPrice * 48),
+        new PriceRow("ADV pilot of 3", "1", "4", "48", cic.AdvPilotThreePrice * 48),
+        new PriceRow("ADV pilot 6 for $3,000", "1", "4", "48", cic.AdvPilotSixPrice * 48)
+    };
+
+    private static double[] CoachingMonthlyValues(double price) => new[]
+    {
+        price * 3, price * 3, price * 3, price * 4, price * 4, price * 4,
+        price * 4, price * 5, price * 5, price * 5, price * 6, price * 6
+    };
+
+    private static double[] AiMonthlyValues(double price) => new[]
+    {
+        price * 3, price * 3, price * 3, price * 3, price * 3, price * 3,
+        price * 3, price * 5, price * 5, price * 6, price * 6, price * 6
+    };
+
+    private static string FormatCurrency(double value) =>
+        value.ToString("$#,##0", CultureInfo.InvariantCulture);
+}

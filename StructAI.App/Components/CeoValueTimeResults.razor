@@ -28,7 +28,8 @@
     var hours = Math.Max(ceo.HoursPerWeek, 1);
     var growthMultiplier = 1 + (ceo.AnnualGrowthPercent / 100);
 
-    <table class="table table-bordered ceo-results-table">
+    <div class="ceo-results-table-container">
+        <table class="table table-bordered ceo-results-table">
         <thead>
             <tr>
                 <th scope="col" rowspan="2">Business Revenue</th>
@@ -57,7 +58,8 @@
                 </tr>
             }
         </tbody>
-    </table>
+        </table>
+    </div>
 }
 
 @code {

@@ -61,6 +61,7 @@ public class WizardEngine
                 "WizardEngine: no steps defined in metadata.");
         }
 
+        Definition.AttachEngine(this);
         _wizardId = GetWizardId(metadataPath);
         CurrentStepIndex = 0;
     }
@@ -89,6 +90,16 @@ public class WizardEngine
 
             "CeoValueTime" =>
                 JsonSerializer.Deserialize<CeoValueTime>(
+                    json,
+                    _jsonOptions),
+
+            "StructAiNewProject" =>
+                JsonSerializer.Deserialize<StructAiNewProject>(
+                    json,
+                    _jsonOptions),
+
+            "CicSalesProjection" =>
+                JsonSerializer.Deserialize<CicSalesProjection>(
                     json,
                     _jsonOptions),
 
@@ -154,6 +165,20 @@ public class WizardEngine
             return "GroundFloor";
         }
 
+        if (path.Contains(
+                "StructAiNewProject",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return "StructAiNewProject";
+        }
+
+        if (path.Contains(
+                "CicSalesProjection",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return "CicSalesProjection";
+        }
+
         return "Default";
     }
 
@@ -161,6 +186,14 @@ public class WizardEngine
         Definition?.Steps?[CurrentStepIndex]
         ?? throw new InvalidOperationException(
             "WizardEngine: metadata not loaded.");
+
+    public void BeginLoad()
+    {
+        Definition = null;
+        Model = null;
+        CurrentStepIndex = 0;
+        NotifyModelChanged();
+    }
 
     public bool IsFirstStep => CurrentStepIndex <= 0;
 
@@ -279,6 +312,10 @@ public class WizardEngine
 
             case "CeoValueTime":
                 ComputeCeoValueTime();
+                break;
+
+            case "StructAiNewProject":
+            case "CicSalesProjection":
                 break;
         }
     }

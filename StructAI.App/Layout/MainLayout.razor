@@ -6,7 +6,8 @@
 
 <!-- DESKTOP TITLE BAR -->
 <div class="desktop-title-bar">
-    StructAI
+    <span>StructAI v1.1</span>
+    <span class="css-version" aria-label="CSS version"></span>
 </div>
 
 <!-- DESKTOP SIDEBAR -->
@@ -54,7 +55,8 @@
 <!-- MOBILE TOP BAR -->
 <div class="menu-bar">
     <div class="menu-bar-inner">
-        <span class="app-title">StructAI</span>
+        <span class="app-title">StructAI v1.1</span>
+        <span class="css-version" aria-label="CSS version"></span>
 
         <button class="navbar-toggler" @onclick="ToggleMenu">
             <span class="navbar-toggler-icon"></span>
@@ -113,5 +115,6 @@
 
     private bool IsWizardPage =>
         Nav.ToBaseRelativePath(Nav.Uri).TrimEnd('/').ToLowerInvariant() is
-            "site-geometry" or "ceo-value-time";
+            "site-geometry" or "ceo-value-time" or
+            "structai-new-project" or "cic-sales-projection";
 }

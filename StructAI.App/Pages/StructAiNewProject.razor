@@ -1,0 +1,30 @@
+@page "/structai-new-project"
+@using StructAI.Components
+@inject NavigationManager Nav
+
+<WizardPage Id="StructAiNewProject"
+			InitialProjectName="@ProjectName"
+			InitialProjectRoute="@ProjectRoute" />
+
+@code {
+	private string? ProjectName => GetQueryValue("projectName");
+	private string? ProjectRoute => GetQueryValue("projectRoute");
+
+	private string? GetQueryValue(string key)
+	{
+		var query = Nav.ToAbsoluteUri(Nav.Uri).Query.TrimStart('?');
+
+		foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+		{
+			var pair = part.Split('=', 2);
+
+			if (pair.Length == 2 &&
+				string.Equals(pair[0], key, StringComparison.OrdinalIgnoreCase))
+			{
+				return Uri.UnescapeDataString(pair[1].Replace('+', ' '));
+			}
+		}
+
+		return null;
+	}
+}

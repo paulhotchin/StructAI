@@ -1,0 +1,42 @@
+@using System.Globalization
+
+<h3>@Title</h3>
+
+<table class="table table-bordered cic-cashflow-table">
+    <thead>
+        <tr>
+            <th>@Year</th>
+            @foreach (var month in Months)
+            {
+                <th>@month</th>
+            }
+            <th>Totals</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <th>Layered cashflow</th>
+            @foreach (var value in MonthlyValues)
+            {
+                <td>@FormatCurrency(value)</td>
+            }
+            <td>@FormatCurrency(MonthlyValues.Sum())</td>
+        </tr>
+    </tbody>
+</table>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public double[] MonthlyValues { get; set; } = Array.Empty<double>();
+
+    private const int Year = 2027;
+
+    private static readonly string[] Months =
+    {
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    };
+
+    private static string FormatCurrency(double value) =>
+        value.ToString("$#,##0", CultureInfo.InvariantCulture);
+}

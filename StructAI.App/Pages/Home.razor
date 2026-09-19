@@ -2,9 +2,106 @@
 
 @inject NavigationManager Nav
 
-@code {
-	protected override void OnInitialized()
+<PageTitle>StructAI Projects</PageTitle>
+
+<div class="project-selector">
+	<h1>StructAI Projects</h1>
+
+	<div class="project-select-row">
+		<label for="project-select">Project</label>
+		<select id="project-select" class="form-select" @bind="SelectedProjectKey">
+			@foreach (var project in Projects)
+			{
+				<option value="@project.Key">@project.Name</option>
+			}
+		</select>
+		<button class="btn btn-primary" type="button" @onclick="OpenSelectedProject">
+			Open
+		</button>
+		<button class="btn btn-secondary" type="button" @onclick="ToggleAddProject">
+			@(ShowAddProject ? "Cancel" : "Add")
+		</button>
+	</div>
+
+	@if (ShowAddProject)
 	{
-		Nav.NavigateTo("site-geometry", replace: true);
+		<div class="add-project-form">
+			<label for="project-name">Project Name</label>
+			<input id="project-name" class="form-control" @bind="NewProjectName" required />
+
+			<label for="project-route">Project Route</label>
+			<input id="project-route" class="form-control" @bind="NewProjectRoute" placeholder="new-project" required />
+
+			<button class="btn btn-primary" type="button" @onclick="AddProject">
+				Add
+			</button>
+		</div>
 	}
+
+	@if (ShowValidationError)
+	{
+		<div class="hint-backdrop" role="presentation">
+			<div class="hint-modal" role="alertdialog" aria-modal="true" aria-labelledby="add-project-error-title">
+				<h2 id="add-project-error-title">Project details required</h2>
+				<p>@ValidationMessage</p>
+				<button class="btn btn-primary" type="button" @onclick="CloseValidationError">OK</button>
+			</div>
+		</div>
+	}
+
+</div>
+
+@code {
+	private bool ShowAddProject;
+	private bool ShowValidationError;
+	private string ValidationMessage = string.Empty;
+	private string? SelectedProjectKey = "site-geometry";
+	private string NewProjectName = string.Empty;
+	private string NewProjectRoute = string.Empty;
+
+	private List<ProjectOption> Projects { get; } = new()
+	{
+		new("site-geometry", "Site Geometry"),
+		new("ceo-value-time", "CEO - Value Your Time"),
+		new("cic-sales-projection", "CIC Sales Projection"),
+		new("counter", "Counter"),
+		new("weather", "Weather"),
+		new("structai-new-project", "Struct AI - New Project")
+	};
+
+	private void OpenSelectedProject()
+	{
+		var project = Projects.FirstOrDefault(item => item.Key == SelectedProjectKey);
+
+		if (project is not null)
+			Nav.NavigateTo($"{Nav.BaseUri.TrimEnd('/')}/{project.Key}");
+	}
+
+	private void ToggleAddProject() => ShowAddProject = !ShowAddProject;
+
+	private void AddProject()
+	{
+		var name = NewProjectName.Trim();
+		var route = NewProjectRoute.Trim().Trim('/').ToLowerInvariant();
+
+		if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(route))
+		{
+			ValidationMessage = string.IsNullOrWhiteSpace(name) && string.IsNullOrWhiteSpace(route)
+				? "Project Name and Project Route are required."
+				: string.IsNullOrWhiteSpace(name)
+					? "Project Name is required."
+					: "Project Route is required.";
+			ShowValidationError = true;
+			return;
+		}
+
+		Nav.NavigateTo(
+			$"{Nav.BaseUri.TrimEnd('/')}/structai-new-project" +
+			$"?projectName={Uri.EscapeDataString(name)}" +
+			$"&projectRoute={Uri.EscapeDataString(route)}");
+	}
+
+	private void CloseValidationError() => ShowValidationError = false;
+
+	private sealed record ProjectOption(string Key, string Name);
 }

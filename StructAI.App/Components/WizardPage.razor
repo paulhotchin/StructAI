@@ -1,5 +1,6 @@
 <!-- E:\work\TQ\Kepler\StructAI\StructAI.App\Components\WizardPage.razor -->
 @using StructAI.Components
+@using StructAI.Model
 @using StructAI.Services
 
 @inject HttpClient Http
@@ -19,6 +20,10 @@
     {
         <CeoValueTimeResults />
     }
+    else if (Id == "CicSalesProjection")
+    {
+        <CicSalesProjectionSteps @key="Id" />
+    }
     else
     {
         @foreach (var field in Engine.CurrentStep.Fields) {
@@ -30,6 +35,12 @@
 
 @code {
     [Parameter] public string Id { get; set; } = default!;
+    [Parameter] public string? InitialProjectName { get; set; }
+    [Parameter] public string? InitialProjectRoute { get; set; }
+
+    private string? _loadedId;
+    private string? _loadedProjectName;
+    private string? _loadedProjectRoute;
 
     protected override void OnInitialized()
     {
@@ -41,13 +52,33 @@
         _ = InvokeAsync(StateHasChanged);
     }
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
+        if (Id == _loadedId &&
+            InitialProjectName == _loadedProjectName &&
+            InitialProjectRoute == _loadedProjectRoute)
+        {
+            return;
+        }
+
+        _loadedId = Id;
+        _loadedProjectName = InitialProjectName;
+        _loadedProjectRoute = InitialProjectRoute;
+
+        Engine.BeginLoad();
+
         var metadataPath = $"AppData/metadata/{Id}Wizard.json";
         var modelPath    = $"AppData/models/{Id}.json";
 
         await Engine.LoadMetadataAsync(Http, metadataPath);
         await Engine.LoadModelAsync(Http, modelPath, Id);
+
+        if (Id == "StructAiNewProject" && Engine.Model is StructAiNewProject newProject)
+        {
+            newProject.ProjectName = InitialProjectName ?? newProject.ProjectName;
+            newProject.ProjectRoute = InitialProjectRoute ?? newProject.ProjectRoute;
+            Engine.NotifyModelChanged();
+        }
 
         Engine.Compute(Id);
 
