@@ -3,16 +3,11 @@ namespace StructAI.Model;
 
 public class CeoValueTime
 {
-    // Inputs
-    public double HourlyRate { get; set; }
+    public double WeeksPerYear { get; set; }
     public double HoursPerWeek { get; set; }
-    public double AdminHours { get; set; }
-    public double InterruptionsPerDay { get; set; }
-    public double MinutesLostPerInterruption { get; set; }
+    public double AnnualGrowthPercent { get; set; }
 
-    // Computed outputs
-    public double WeeklyCostAdmin { get; set; }
-    public double WeeklyCostInterruptions { get; set; }
-    public double TotalWeeklyLoss { get; set; }
-    public double AnnualLoss { get; set; }
+    public double AnnualHours { get; set; }
+    public double AnnualValue { get; set; }
+    public double AnnualValueWithGrowth { get; set; }
 }
