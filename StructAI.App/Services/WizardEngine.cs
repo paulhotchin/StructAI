@@ -315,7 +315,25 @@ public class WizardEngine
                 break;
 
             case "StructAiNewProject":
+                break;
+
             case "CicSalesProjection":
+                if (Model is CicSalesProjection cic)
+                {
+                    if (cic.PriceItems.Count == 0)
+                    {
+                        cic.PriceItems = new List<CicPriceItem>
+                        {
+                            new() { Name = "Assessment", Price = cic.AssessmentPrice },
+                            new() { Name = "Debrief", Price = cic.DebriefPrice },
+                            new() { Name = "ADV & Debrief", Price = cic.AdvDebriefPrice },
+                            new() { Name = "ADV pilot of 3", Price = cic.AdvPilotThreePrice },
+                            new() { Name = "ADV pilot of 6", Price = cic.AdvPilotSixPrice }
+                        };
+                    }
+
+                    cic.SyncLegacyPrices();
+                }
                 break;
         }
     }

@@ -10,16 +10,93 @@
     @if (Engine.CurrentStep.Id == "PriceList")
     {
         <div class="cic-inputs">
-            @foreach (var field in Engine.CurrentStep.Fields)
-            {
-                <FieldRenderer Field="field" />
-            }
-        </div>
+            <div class="d-flex justify-content-end mb-3">
+                <button type="button" class="btn btn-primary btn-sm" @onclick="AddItem">
+                    Add item
+                </button>
+            </div>
 
+            <table class="table table-bordered cic-table">
+                <thead>
+                    <tr>
+                        <th>Item Name</th>
+                        <th>Price</th>
+                        <th style="width: 120px;">Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in cic.PriceItems)
+                    {
+                        <tr>
+                            <td>
+                                <input class="form-control"
+                                       value="@item.Name"
+                                       @oninput="@(e => UpdateItemName(item, e.Value?.ToString()))" />
+                            </td>
+                            <td>
+                                <InputNumber TValue="double"
+                                             class="form-control"
+                                             @bind-Value:get="item.Price"
+                                             @bind-Value:set="value => UpdateItemPrice(item, value)" />
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-danger btn-sm" @onclick="() => DeleteItem(item)">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else if (Engine.CurrentStep.Id == "DataEntry")
+    {
+        <div class="cic-inputs">
+            <table class="table table-bordered cic-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Per week</th>
+                        <th>Per month</th>
+                        <th>Per year</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in cic.PriceItems)
+                    {
+                        <tr>
+                            <td>@item.Name</td>
+                            <td>
+                                <InputNumber TValue="int"
+                                             class="form-control"
+                                             @bind-Value:get="item.UnitsPerWeek"
+                                             @bind-Value:set="@(value => UpdateUnits(item, value, CicUnitPeriod.Week))" />
+                            </td>
+                            <td>
+                                <InputNumber TValue="int"
+                                             class="form-control"
+                                             @bind-Value:get="item.UnitsPerMonth"
+                                             @bind-Value:set="@(value => UpdateUnits(item, value, CicUnitPeriod.Month))" />
+                            </td>
+                            <td>
+                                <InputNumber TValue="int"
+                                             class="form-control"
+                                             @bind-Value:get="item.UnitsPerYear"
+                                             @bind-Value:set="@(value => UpdateUnits(item, value, CicUnitPeriod.Year))" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else if (Engine.CurrentStep.Id == "Results")
+    {
         <table class="table table-bordered cic-table">
             <thead>
                 <tr>
-                    <th>Offer</th>
+                    <th>Item</th>
                     <th>Per week</th>
                     <th>Per month</th>
                     <th>Per year</th>
@@ -27,52 +104,94 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var offer in PriceRows(cic))
+                @foreach (var item in cic.PriceItems)
                 {
                     <tr>
-                        <th>@offer.Label</th>
-                        <td>@offer.Weekly</td>
-                        <td>@offer.Monthly</td>
-                        <td>@offer.Annual</td>
-                        <td>@FormatCurrency(offer.Revenue)</td>
+                        <th>@item.Name</th>
+                        <td>@item.UnitsPerWeek</td>
+                        <td>@item.UnitsPerMonth</td>
+                        <td>@item.UnitsPerYear</td>
+                        <td>@FormatCurrency(item.AnnualRevenue)</td>
                     </tr>
                 }
             </tbody>
         </table>
     }
-    else if (Engine.CurrentStep.Id == "CoachingContractOnly")
-    {
-        <CicCashflowTable Title="Coaching Contract Only" MonthlyValues="@CoachingMonthlyValues(cic.MonthlyCoachingPrice)" />
-    }
-    else if (Engine.CurrentStep.Id == "AI")
-    {
-        <CicCashflowTable Title="In-House Unlimited Client Account with AI" MonthlyValues="@AiMonthlyValues(cic.InHouseAiMonthlyPrice)" />
-    }
 }
 
 @code {
-    private sealed record PriceRow(string Label, string Weekly, string Monthly, string Annual, double Revenue);
-
-    private static IEnumerable<PriceRow> PriceRows(CicSalesProjection cic) => new[]
+    private enum CicUnitPeriod
     {
-        new PriceRow("Assessments sold", "1", "4", "48", cic.AssessmentPrice * 48),
-        new PriceRow("Debrief", "1", "4", "48", cic.DebriefPrice * 48),
-        new PriceRow("ADVs & Debriefs", "1", "4", "48", cic.AdvDebriefPrice * 48),
-        new PriceRow("ADV pilot of 3", "1", "4", "48", cic.AdvPilotThreePrice * 48),
-        new PriceRow("ADV pilot 6 for $3,000", "1", "4", "48", cic.AdvPilotSixPrice * 48)
-    };
+        Week,
+        Month,
+        Year
+    }
 
-    private static double[] CoachingMonthlyValues(double price) => new[]
+    private void AddItem()
     {
-        price * 3, price * 3, price * 3, price * 4, price * 4, price * 4,
-        price * 4, price * 5, price * 5, price * 5, price * 6, price * 6
-    };
+        if (Engine.Model is not CicSalesProjection cic)
+            return;
 
-    private static double[] AiMonthlyValues(double price) => new[]
+        cic.PriceItems.Add(new CicPriceItem
+        {
+            Name = $"Item {cic.PriceItems.Count + 1}",
+            Price = 0,
+            UnitsPerWeek = 1,
+            UnitsPerMonth = 4,
+            UnitsPerYear = 48
+        });
+
+        cic.SyncLegacyPrices();
+        Engine.NotifyModelChanged();
+    }
+
+    private void UpdateItemName(CicPriceItem item, string? value)
     {
-        price * 3, price * 3, price * 3, price * 3, price * 3, price * 3,
-        price * 3, price * 5, price * 5, price * 6, price * 6, price * 6
-    };
+        if (string.IsNullOrWhiteSpace(value))
+            return;
+
+        item.Name = value;
+        Engine.NotifyModelChanged();
+    }
+
+    private void UpdateItemPrice(CicPriceItem item, double value)
+    {
+        item.Price = value;
+        if (Engine.Model is CicSalesProjection cic)
+        {
+            cic.SyncLegacyPrices();
+        }
+
+        Engine.NotifyModelChanged();
+    }
+
+    private void UpdateUnits(CicPriceItem item, int value, CicUnitPeriod period)
+    {
+        switch (period)
+        {
+            case CicUnitPeriod.Week:
+                item.UnitsPerWeek = value;
+                break;
+            case CicUnitPeriod.Month:
+                item.UnitsPerMonth = value;
+                break;
+            case CicUnitPeriod.Year:
+                item.UnitsPerYear = value;
+                break;
+        }
+
+        Engine.NotifyModelChanged();
+    }
+
+    private void DeleteItem(CicPriceItem item)
+    {
+        if (Engine.Model is not CicSalesProjection cic)
+            return;
+
+        cic.PriceItems.Remove(item);
+        cic.SyncLegacyPrices();
+        Engine.NotifyModelChanged();
+    }
 
     private static string FormatCurrency(double value) =>
         value.ToString("$#,##0", CultureInfo.InvariantCulture);

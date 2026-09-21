@@ -22,7 +22,7 @@
     }
     else if (Id == "CicSalesProjection")
     {
-        <CicSalesProjectionSteps @key="Id" />
+        <CicSalesProjectionSteps @key="@($"{Id}-{Engine.CurrentStep.Id}-{Engine.CurrentStepIndex}")" />
     }
     else
     {

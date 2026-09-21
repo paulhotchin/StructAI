@@ -110,8 +110,17 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    void NextStep() => Engine.NextStep();
-    void PrevStep() => Engine.PreviousStep();
+    private async Task NextStep()
+    {
+        Engine.NextStep();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task PrevStep()
+    {
+        Engine.PreviousStep();
+        await InvokeAsync(StateHasChanged);
+    }
 
     private bool IsWizardPage =>
         Nav.ToBaseRelativePath(Nav.Uri).TrimEnd('/').ToLowerInvariant() is
