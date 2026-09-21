@@ -9,15 +9,15 @@
       "fields": []
     },
     {
-      "id": "DataEntry",
-      "title": "Data entry",
-      "description": "Enter the number per week, per month, and per year for each item.",
-      "fields": []
-    },
-    {
       "id": "Results",
       "title": "Results",
       "description": "Revenue per annum by item.",
+      "fields": []
+    },
+    {
+      "id": "CashFlow",
+      "title": "Cash flow",
+      "description": "Monthly cash flow based on projected sales.",
       "fields": []
     }
   ]

@@ -5,7 +5,7 @@
 <table class="table table-bordered cic-cashflow-table">
     <thead>
         <tr>
-            <th>@Year</th>
+            <th>@ProjectionYear</th>
             @foreach (var month in Months)
             {
                 <th>@month</th>
@@ -27,9 +27,8 @@
 
 @code {
     [Parameter] public string Title { get; set; } = "";
+    [Parameter] public int ProjectionYear { get; set; }
     [Parameter] public double[] MonthlyValues { get; set; } = Array.Empty<double>();
-
-    private const int Year = 2027;
 
     private static readonly string[] Months =
     {

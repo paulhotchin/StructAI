@@ -109,6 +109,11 @@ public class WizardEngine
                     _jsonOptions)
         };
 
+        if (Model is CicSalesProjection cic)
+        {
+            cic.EnsureRequiredItems();
+        }
+
         if (Model is null)
         {
             throw new InvalidOperationException(

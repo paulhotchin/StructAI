@@ -16,12 +16,25 @@
                 </button>
             </div>
 
-            <table class="table table-bordered cic-table">
+            <table class="table table-bordered cic-table cic-entry-table">
+                <colgroup>
+                    <col class="cic-entry-item-column" />
+                    <col class="cic-entry-price-column" />
+                    <col class="cic-entry-period-column" />
+                    <col class="cic-entry-number-column" />
+                    <col class="cic-entry-action-column" />
+                </colgroup>
                 <thead>
                     <tr>
-                        <th>Item Name</th>
-                        <th>Price</th>
-                        <th style="width: 120px;">Delete</th>
+                        <th rowspan="2">Item Name</th>
+                        <th rowspan="2">Price</th>
+                        <th colspan="2">Projected Sales</th>
+                        <th></th>
+                    </tr>
+                    <tr>
+                        <th>Period</th>
+                        <th>Num Items</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -40,6 +53,26 @@
                                              @bind-Value:set="value => UpdateItemPrice(item, value)" />
                             </td>
                             <td>
+                                <InputSelect TValue="CicPeriod"
+                                             class="form-control"
+                                             Value="@item.Period"
+                                             ValueChanged="@(value => UpdatePeriod(item, value))"
+                                             ValueExpression="@(() => item.Period)"
+                                             disabled="@item.PeriodLocked">
+                                    <option value="@CicPeriod.Week">Week</option>
+                                    <option value="@CicPeriod.Month">Month</option>
+                                    <option value="@CicPeriod.Year">Year</option>
+                                    <option value="@CicPeriod.AprAugNov">Apr Aug Nov</option>
+                                    <option value="@CicPeriod.AprJulOct">Apr Jul Oct</option>
+                                </InputSelect>
+                            </td>
+                            <td>
+                                <InputNumber TValue="int"
+                                             class="form-control"
+                                             @bind-Value:get="item.Units"
+                                             @bind-Value:set="value => UpdateUnits(item, value)" />
+                            </td>
+                            <td>
                                 <button type="button" class="btn btn-danger btn-sm" @onclick="() => DeleteItem(item)">
                                     Delete
                                 </button>
@@ -50,57 +83,32 @@
             </table>
         </div>
     }
-    else if (Engine.CurrentStep.Id == "DataEntry")
-    {
-        <div class="cic-inputs">
-            <table class="table table-bordered cic-table">
-                <thead>
-                    <tr>
-                        <th>Item</th>
-                        <th>Per week</th>
-                        <th>Per month</th>
-                        <th>Per year</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in cic.PriceItems)
-                    {
-                        <tr>
-                            <td>@item.Name</td>
-                            <td>
-                                <InputNumber TValue="int"
-                                             class="form-control"
-                                             @bind-Value:get="item.UnitsPerWeek"
-                                             @bind-Value:set="@(value => UpdateUnits(item, value, CicUnitPeriod.Week))" />
-                            </td>
-                            <td>
-                                <InputNumber TValue="int"
-                                             class="form-control"
-                                             @bind-Value:get="item.UnitsPerMonth"
-                                             @bind-Value:set="@(value => UpdateUnits(item, value, CicUnitPeriod.Month))" />
-                            </td>
-                            <td>
-                                <InputNumber TValue="int"
-                                             class="form-control"
-                                             @bind-Value:get="item.UnitsPerYear"
-                                             @bind-Value:set="@(value => UpdateUnits(item, value, CicUnitPeriod.Year))" />
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
     else if (Engine.CurrentStep.Id == "Results")
     {
-        <table class="table table-bordered cic-table">
+        <table class="table table-bordered cic-table cic-results-table">
+            <colgroup>
+                <col class="cic-results-item-column" />
+                <col class="cic-results-number-column" />
+                <col class="cic-results-revenue-column" />
+                <col class="cic-results-number-column" />
+                <col class="cic-results-revenue-column" />
+                <col class="cic-results-number-column" />
+                <col class="cic-results-revenue-column" />
+            </colgroup>
             <thead>
                 <tr>
-                    <th>Item</th>
-                    <th>Per week</th>
-                    <th>Per month</th>
-                    <th>Per year</th>
-                    <th>Revenue p.a.</th>
+                    <th rowspan="2">Item</th>
+                    <th colspan="2">Week</th>
+                    <th colspan="2">Month</th>
+                    <th colspan="2">Year</th>
+                </tr>
+                <tr>
+                    <th>Num</th>
+                    <th>Revenue</th>
+                    <th>Num</th>
+                    <th>Revenue</th>
+                    <th>Num</th>
+                    <th>Revenue</th>
                 </tr>
             </thead>
             <tbody>
@@ -108,25 +116,26 @@
                 {
                     <tr>
                         <th>@item.Name</th>
-                        <td>@item.UnitsPerWeek</td>
-                        <td>@item.UnitsPerMonth</td>
-                        <td>@item.UnitsPerYear</td>
-                        <td>@FormatCurrency(item.AnnualRevenue)</td>
+                        <td>@FormatNumeric(item.UnitsPerWeek)</td>
+                        <td>@FormatCurrency(item.RevenuePerWeek)</td>
+                        <td>@FormatNumeric(item.UnitsPerMonth)</td>
+                        <td>@FormatCurrency(item.RevenuePerMonth)</td>
+                        <td>@FormatNumeric(item.UnitsPerYear)</td>
+                        <td>@FormatCurrency(item.RevenuePerYear)</td>
                     </tr>
                 }
             </tbody>
         </table>
     }
+    else if (Engine.CurrentStep.Id == "CashFlow")
+    {
+        <CicCashflowTable Title="Cash flow"
+                          ProjectionYear="@cic.ProjectionYear"
+                          MonthlyValues="@BuildMonthlyCashflow(cic)" />
+    }
 }
 
 @code {
-    private enum CicUnitPeriod
-    {
-        Week,
-        Month,
-        Year
-    }
-
     private void AddItem()
     {
         if (Engine.Model is not CicSalesProjection cic)
@@ -136,6 +145,8 @@
         {
             Name = $"Item {cic.PriceItems.Count + 1}",
             Price = 0,
+            Units = 1,
+            Period = CicPeriod.Week,
             UnitsPerWeek = 1,
             UnitsPerMonth = 4,
             UnitsPerYear = 48
@@ -165,20 +176,50 @@
         Engine.NotifyModelChanged();
     }
 
-    private void UpdateUnits(CicPriceItem item, int value, CicUnitPeriod period)
+    private void UpdateUnits(CicPriceItem item, int value)
     {
-        switch (period)
+        item.Units = value;
+
+        switch (item.Period)
         {
-            case CicUnitPeriod.Week:
+            case CicPeriod.Week:
                 item.UnitsPerWeek = value;
+                item.UnitsPerMonth = value * 4d;
+                item.UnitsPerYear = value * 52d;
                 break;
-            case CicUnitPeriod.Month:
+            case CicPeriod.Month:
                 item.UnitsPerMonth = value;
+                item.UnitsPerWeek = value / 4d;
+                item.UnitsPerYear = value * 12d;
                 break;
-            case CicUnitPeriod.Year:
+            case CicPeriod.Year:
                 item.UnitsPerYear = value;
+                item.UnitsPerWeek = value / 52d;
+                item.UnitsPerMonth = value / 12d;
+                break;
+            case CicPeriod.AprAugNov:
+            case CicPeriod.AprJulOct:
+                item.UnitsPerYear = value * 3d;
+                item.UnitsPerWeek = value * 3d / 52d;
+                item.UnitsPerMonth = value * 3d / 12d;
                 break;
         }
+
+        Engine.NotifyModelChanged();
+    }
+
+    private void UpdatePeriod(CicPriceItem item, CicPeriod value)
+    {
+        item.Period = value;
+        item.Units = (int)Math.Round(value switch
+        {
+            CicPeriod.Week => item.UnitsPerWeek,
+            CicPeriod.Month => item.UnitsPerMonth,
+            CicPeriod.Year => item.UnitsPerYear,
+            CicPeriod.AprAugNov => item.UnitsPerYear / 3d,
+            CicPeriod.AprJulOct => item.UnitsPerYear / 3d,
+            _ => item.Units
+        }, MidpointRounding.AwayFromZero);
 
         Engine.NotifyModelChanged();
     }
@@ -193,6 +234,43 @@
         Engine.NotifyModelChanged();
     }
 
+    private static double[] BuildMonthlyCashflow(CicSalesProjection cic)
+    {
+        var monthlyCashflow = new double[12];
+
+        foreach (var item in cic.PriceItems)
+        {
+            if (item.Period is CicPeriod.AprAugNov or CicPeriod.AprJulOct)
+            {
+                var startMonths = item.Period == CicPeriod.AprAugNov
+                    ? new[] { 3, 7, 10 }
+                    : new[] { 3, 6, 9 };
+
+                for (var month = 0; month < monthlyCashflow.Length; month++)
+                {
+                    var activeSales = startMonths.Count(startMonth => month >= startMonth);
+                    monthlyCashflow[month] += activeSales * item.Price * item.Units;
+                }
+            }
+            else
+            {
+                var monthlyRevenue = item.RevenuePerMonth;
+                for (var month = 0; month < monthlyCashflow.Length; month++)
+                    monthlyCashflow[month] += monthlyRevenue;
+            }
+        }
+
+        return monthlyCashflow;
+    }
+
     private static string FormatCurrency(double value) =>
         value.ToString("$#,##0", CultureInfo.InvariantCulture);
+
+    private static string FormatNumeric(double value)
+    {
+        if (Math.Abs(value - Math.Round(value)) < 0.0001)
+            return value.ToString("0", CultureInfo.InvariantCulture);
+
+        return value.ToString("0.0", CultureInfo.InvariantCulture);
+    }
 }
