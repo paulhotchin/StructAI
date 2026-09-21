@@ -4,15 +4,17 @@ public class CicSalesProjection
 {
     public List<CicPriceItem> PriceItems { get; set; } = new()
     {
-        new() { Name = "Assessment", Price = 545, UnitsPerWeek = 1, UnitsPerMonth = 4, UnitsPerYear = 48 },
-        new() { Name = "Debrief", Price = 780, UnitsPerWeek = 1, UnitsPerMonth = 4, UnitsPerYear = 48 },
-        new() { Name = "ADV & Debrief", Price = 1325, UnitsPerWeek = 1, UnitsPerMonth = 4, UnitsPerYear = 48 },
-        new() { Name = "ADV pilot of 3", Price = 1635, UnitsPerWeek = 1, UnitsPerMonth = 4, UnitsPerYear = 48 },
-        new() { Name = "ADV pilot of 6", Price = 3000, UnitsPerWeek = 1, UnitsPerMonth = 4, UnitsPerYear = 48 },
+        new() { Name = "Assessment", Price = 545, ProfitFactor = 0.4, UnitsPerWeek = 1, UnitsPerMonth = 4, UnitsPerYear = 48 },
+        new() { Name = "Debrief", Price = 780, ProfitFactor = 0.8, UnitsPerWeek = 1, UnitsPerMonth = 4, UnitsPerYear = 48 },
+        new() { Name = "ADV & Debrief", Price = 1325, ProfitFactor = 0.4, UnitsPerWeek = 1, UnitsPerMonth = 4, UnitsPerYear = 48 },
+        new() { Name = "ADV pilot of 3", Price = 1635, ProfitFactor = 0.4, UnitsPerWeek = 1, UnitsPerMonth = 4, UnitsPerYear = 48 },
+        new() { Name = "ADV pilot of 6", Price = 3000, ProfitFactor = 0.4, UnitsPerWeek = 1, UnitsPerMonth = 4, UnitsPerYear = 48 },
         new()
         {
             Name = "Coaching Contract",
             Price = 1250,
+            ProfitFactor = 0.8,
+            Perennial = true,
             Period = CicPeriod.AprAugNov,
             Units = 1,
             UnitsPerWeek = 3d / 52d,
@@ -24,6 +26,8 @@ public class CicSalesProjection
         {
             Name = "Client Account AI",
             Price = 6200,
+            ProfitFactor = 0.8,
+            Perennial = true,
             Period = CicPeriod.AprJulOct,
             Units = 1,
             UnitsPerWeek = 3d / 52d,
@@ -50,6 +54,8 @@ public class CicSalesProjection
             {
                 Name = "Coaching Contract",
                 Price = MonthlyCoachingPrice,
+                ProfitFactor = 0.8,
+                Perennial = true,
                 Period = CicPeriod.AprAugNov,
                 Units = 1,
                 UnitsPerWeek = 3d / 52d,
@@ -65,6 +71,8 @@ public class CicSalesProjection
             {
                 Name = "Client Account AI",
                 Price = InHouseAiMonthlyPrice,
+                ProfitFactor = 0.8,
+                Perennial = true,
                 Period = CicPeriod.AprJulOct,
                 Units = 1,
                 UnitsPerWeek = 3d / 52d,
@@ -81,6 +89,26 @@ public class CicSalesProjection
         var clientAccountAi = PriceItems.First(item => item.Name == "Client Account AI");
         if (clientAccountAi.Price == 0)
             clientAccountAi.Price = InHouseAiMonthlyPrice;
+
+        var defaultProfitFactors = new Dictionary<string, double>
+        {
+            ["Assessment"] = 0.4,
+            ["Debrief"] = 0.8,
+            ["ADV & Debrief"] = 0.4,
+            ["ADV pilot of 3"] = 0.4,
+            ["ADV pilot of 6"] = 0.4,
+            ["Coaching Contract"] = 0.8,
+            ["Client Account AI"] = 0.8
+        };
+
+        foreach (var item in PriceItems)
+        {
+            if (defaultProfitFactors.TryGetValue(item.Name, out var factor))
+                item.ProfitFactor = factor;
+
+            if (item.Name is "Coaching Contract" or "Client Account AI")
+                item.Perennial = true;
+        }
     }
 
     public void SyncLegacyPrices()
@@ -101,6 +129,8 @@ public class CicPriceItem
 {
     public string Name { get; set; } = "";
     public double Price { get; set; }
+    public double ProfitFactor { get; set; } = 0.4;
+    public bool Perennial { get; set; }
     public int Units { get; set; } = 1;
     public CicPeriod Period { get; set; } = CicPeriod.Week;
     public bool PeriodLocked { get; set; }

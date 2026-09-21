@@ -22,6 +22,7 @@
                     <col class="cic-entry-price-column" />
                     <col class="cic-entry-period-column" />
                     <col class="cic-entry-number-column" />
+                    <col class="cic-entry-profit-column" />
                     <col class="cic-entry-action-column" />
                 </colgroup>
                 <thead>
@@ -29,6 +30,7 @@
                         <th rowspan="2">Item Name</th>
                         <th rowspan="2">Price</th>
                         <th colspan="2">Projected Sales</th>
+                        <th rowspan="2">Profit</th>
                         <th></th>
                     </tr>
                     <tr>
@@ -71,6 +73,11 @@
                                              class="form-control"
                                              @bind-Value:get="item.Units"
                                              @bind-Value:set="value => UpdateUnits(item, value)" />
+                            </td>
+                            <td>
+                                <input class="form-control"
+                                       value="@FormatPercent(item.ProfitFactor)"
+                                       readonly />
                             </td>
                             <td>
                                 <button type="button" class="btn btn-danger btn-sm" @onclick="() => DeleteItem(item)">
@@ -131,7 +138,8 @@
     {
         <CicCashflowTable Title="Cash flow"
                           ProjectionYear="@cic.ProjectionYear"
-                          MonthlyValues="@BuildMonthlyCashflow(cic)" />
+                          SalesByYear="@BuildYearlyCashflow(cic, false)"
+                          ProfitByYear="@BuildYearlyCashflow(cic, true)" />
     }
 }
 
@@ -234,37 +242,49 @@
         Engine.NotifyModelChanged();
     }
 
-    private static double[] BuildMonthlyCashflow(CicSalesProjection cic)
+    private static double[][] BuildYearlyCashflow(CicSalesProjection cic, bool profitOnly)
     {
-        var monthlyCashflow = new double[12];
+        var yearlyCashflow = new double[5][];
 
-        foreach (var item in cic.PriceItems)
+        for (var yearOffset = 0; yearOffset < yearlyCashflow.Length; yearOffset++)
         {
-            if (item.Period is CicPeriod.AprAugNov or CicPeriod.AprJulOct)
-            {
-                var startMonths = item.Period == CicPeriod.AprAugNov
-                    ? new[] { 3, 7, 10 }
-                    : new[] { 3, 6, 9 };
+            yearlyCashflow[yearOffset] = new double[12];
 
-                for (var month = 0; month < monthlyCashflow.Length; month++)
-                {
-                    var activeSales = startMonths.Count(startMonth => month >= startMonth);
-                    monthlyCashflow[month] += activeSales * item.Price * item.Units;
-                }
-            }
-            else
+            foreach (var item in cic.PriceItems)
             {
-                var monthlyRevenue = item.RevenuePerMonth;
-                for (var month = 0; month < monthlyCashflow.Length; month++)
-                    monthlyCashflow[month] += monthlyRevenue;
+                if (item.Period is CicPeriod.AprAugNov or CicPeriod.AprJulOct)
+                {
+                    var startMonths = item.Period == CicPeriod.AprAugNov
+                        ? new[] { 3, 7, 10 }
+                        : new[] { 3, 6, 9 };
+
+                    for (var month = 0; month < 12; month++)
+                    {
+                        var priorYearSales = item.Perennial ? yearOffset * startMonths.Length : 0;
+                        var activeSales = priorYearSales + startMonths.Count(startMonth => month >= startMonth);
+                        var sales = activeSales * item.Price * item.Units;
+                        yearlyCashflow[yearOffset][month] += profitOnly ? sales * item.ProfitFactor : sales;
+                    }
+                }
+                else
+                {
+                    var monthlyRevenue = item.RevenuePerMonth;
+                    for (var month = 0; month < 12; month++)
+                        yearlyCashflow[yearOffset][month] += profitOnly
+                            ? monthlyRevenue * item.ProfitFactor
+                            : monthlyRevenue;
+                }
             }
         }
 
-        return monthlyCashflow;
+        return yearlyCashflow;
     }
 
     private static string FormatCurrency(double value) =>
         value.ToString("$#,##0", CultureInfo.InvariantCulture);
+
+    private static string FormatPercent(double value) =>
+        value.ToString("0%", CultureInfo.InvariantCulture);
 
     private static string FormatNumeric(double value)
     {

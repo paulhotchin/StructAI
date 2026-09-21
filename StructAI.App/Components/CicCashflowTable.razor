@@ -5,7 +5,7 @@
 <table class="table table-bordered cic-cashflow-table">
     <thead>
         <tr>
-            <th>@ProjectionYear</th>
+            <th>Year</th>
             @foreach (var month in Months)
             {
                 <th>@month</th>
@@ -14,21 +14,36 @@
         </tr>
     </thead>
     <tbody>
-        <tr>
-            <th>Layered cashflow</th>
-            @foreach (var value in MonthlyValues)
-            {
-                <td>@FormatCurrency(value)</td>
-            }
-            <td>@FormatCurrency(MonthlyValues.Sum())</td>
-        </tr>
+        @for (var yearOffset = 0; yearOffset < 5; yearOffset++)
+        {
+            <tr class="cic-cashflow-year-row">
+                <th colspan="14">@(ProjectionYear + yearOffset)</th>
+            </tr>
+            <tr>
+                <th>Sales</th>
+                @foreach (var value in SalesByYear[yearOffset])
+                {
+                    <td>@FormatCurrency(value)</td>
+                }
+                <td>@FormatCurrency(SalesByYear[yearOffset].Sum())</td>
+            </tr>
+            <tr>
+                <th>Profit</th>
+                @foreach (var value in ProfitByYear[yearOffset])
+                {
+                    <td>@FormatCurrency(value)</td>
+                }
+                <td>@FormatCurrency(ProfitByYear[yearOffset].Sum())</td>
+            </tr>
+        }
     </tbody>
 </table>
 
 @code {
     [Parameter] public string Title { get; set; } = "";
     [Parameter] public int ProjectionYear { get; set; }
-    [Parameter] public double[] MonthlyValues { get; set; } = Array.Empty<double>();
+    [Parameter] public double[][] SalesByYear { get; set; } = Array.Empty<double[]>();
+    [Parameter] public double[][] ProfitByYear { get; set; } = Array.Empty<double[]>();
 
     private static readonly string[] Months =
     {
