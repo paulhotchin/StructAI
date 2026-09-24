@@ -10,11 +10,11 @@
     @if (Engine.CurrentStep.Id == "PriceList")
     {
         <div class="cic-inputs">
-            <div class="d-flex justify-content-end mb-3">
+            @* <div class="d-flex justify-content-end mb-3">
                 <button type="button" class="btn btn-primary btn-sm" @onclick="AddItem">
                     Add item
                 </button>
-            </div>
+            </div> *@
 
             <table class="table table-bordered cic-table cic-entry-table">
                 <colgroup>
@@ -27,15 +27,15 @@
                 </colgroup>
                 <thead>
                     <tr>
-                        <th rowspan="2">Item Name</th>
+                        <th rowspan="2">Products & Services</th>
                         <th rowspan="2">Price</th>
                         <th colspan="2">Projected Sales</th>
-                        <th rowspan="2">Profit</th>
+                        <th rowspan="2">Gross Profit</th>
                         <th></th>
                     </tr>
                     <tr>
                         <th>Period</th>
-                        <th>Num Items</th>
+                        <th>Number</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -72,18 +72,19 @@
                                 <InputNumber TValue="int"
                                              class="form-control"
                                              @bind-Value:get="item.Units"
-                                             @bind-Value:set="value => UpdateUnits(item, value)" />
+                                             @bind-Value:set="value => UpdateUnits(item, value)" 
+                                             disabled="@item.PeriodLocked"/>
                             </td>
                             <td>
                                 <input class="form-control"
                                        value="@FormatPercent(item.ProfitFactor)"
                                        readonly />
                             </td>
-                            <td>
+                            @* <td>
                                 <button type="button" class="btn btn-danger btn-sm" @onclick="() => DeleteItem(item)">
                                     Delete
                                 </button>
-                            </td>
+                            </td> *@
                         </tr>
                     }
                 </tbody>
@@ -104,39 +105,58 @@
             </colgroup>
             <thead>
                 <tr>
-                    <th rowspan="2">Item</th>
-                    <th colspan="2">Week</th>
-                    <th colspan="2">Month</th>
+                    <th rowspan="2">Products & Services</th>
+                    <th colspan="2">Week (Year / 48)</th>
+                    <th colspan="2">Month (Year / 12)</th>
                     <th colspan="2">Year</th>
                 </tr>
                 <tr>
-                    <th>Num</th>
+                    <th>Number</th>
                     <th>Revenue</th>
-                    <th>Num</th>
+                    <th>Number</th>
                     <th>Revenue</th>
-                    <th>Num</th>
+                    <th>Number</th>
                     <th>Revenue</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var item in cic.PriceItems)
                 {
-                    <tr>
-                        <th>@item.Name</th>
-                        <td>@FormatNumeric(item.UnitsPerWeek)</td>
-                        <td>@FormatCurrency(item.RevenuePerWeek)</td>
-                        <td>@FormatNumeric(item.UnitsPerMonth)</td>
-                        <td>@FormatCurrency(item.RevenuePerMonth)</td>
-                        <td>@FormatNumeric(item.UnitsPerYear)</td>
-                        <td>@FormatCurrency(item.RevenuePerYear)</td>
-                    </tr>
+                    if (item.PeriodLocked)
+                    {
+                        const double APRAUGNOV_MULTIPLIER = 16d;
+                        const double APRJULOCT_MULTIPLIER = 18d;
+                        double revenuePerYear = (item.Period == CicPeriod.AprAugNov ? item.Price * APRAUGNOV_MULTIPLIER : item.Price * APRJULOCT_MULTIPLIER) * item.Units;
+
+                        <tr class="cic-results-locked-row">
+                            <td>@item.Name</td>
+                            <td>&nbsp;</td>
+                            <td>@FormatCurrency(revenuePerYear / CicPriceItem.WORK_WEEKS_PER_YEAR)</td>
+                            <td>&nbsp;</td>
+                            <td>@FormatCurrency(revenuePerYear / CicPriceItem.WORK_MONTHS_PER_YEAR)</td>
+                            <td>&nbsp;</td>
+                            <td>@FormatCurrency(revenuePerYear)</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        <tr>
+                            <th>@item.Name</th>
+                            <td>@FormatNumeric(item.UnitsPerWeek)</td>
+                            <td>@FormatCurrency(item.RevenuePerWeek)</td>
+                            <td>@FormatNumeric(item.UnitsPerMonth)</td>
+                            <td>@FormatCurrency(item.RevenuePerMonth)</td>
+                            <td>@FormatNumeric(item.UnitsPerYear)</td>
+                            <td>@FormatCurrency(item.RevenuePerYear)</td>
+                        </tr>
+                    }
                 }
             </tbody>
         </table>
     }
     else if (Engine.CurrentStep.Id == "CashFlow")
     {
-        <CicCashflowTable Title="Cash flow"
+        <CicCashflowTable Title="Cash Flow"
                           ProjectionYear="@cic.ProjectionYear"
                           SalesByYear="@BuildYearlyCashflow(cic, false)"
                           ProfitByYear="@BuildYearlyCashflow(cic, true)" />
@@ -156,8 +176,8 @@
             Units = 1,
             Period = CicPeriod.Week,
             UnitsPerWeek = 1,
-            UnitsPerMonth = 4,
-            UnitsPerYear = 48
+            UnitsPerMonth = CicPriceItem.WORK_WEEKS_PER_MONTH,
+            UnitsPerYear = CicPriceItem.WORK_WEEKS_PER_YEAR
         });
 
         Engine.NotifyModelChanged();
@@ -186,24 +206,24 @@
         {
             case CicPeriod.Week:
                 item.UnitsPerWeek = value;
-                item.UnitsPerMonth = value * 4d;
-                item.UnitsPerYear = value * 52d;
+                item.UnitsPerMonth = value * CicPriceItem.WORK_WEEKS_PER_MONTH;
+                item.UnitsPerYear = value * CicPriceItem.WORK_WEEKS_PER_YEAR;
                 break;
             case CicPeriod.Month:
                 item.UnitsPerMonth = value;
-                item.UnitsPerWeek = value / 4d;
-                item.UnitsPerYear = value * 12d;
+                item.UnitsPerWeek = value / CicPriceItem.WORK_WEEKS_PER_MONTH;
+                item.UnitsPerYear = value * CicPriceItem.WORK_MONTHS_PER_YEAR;
                 break;
             case CicPeriod.Year:
                 item.UnitsPerYear = value;
-                item.UnitsPerWeek = value / 52d;
-                item.UnitsPerMonth = value / 12d;
+                item.UnitsPerWeek = value / CicPriceItem.WORK_WEEKS_PER_YEAR;
+                item.UnitsPerMonth = value / CicPriceItem.WORK_MONTHS_PER_YEAR;
                 break;
             case CicPeriod.AprAugNov:
             case CicPeriod.AprJulOct:
-                item.UnitsPerYear = value * 3d;
-                item.UnitsPerWeek = value * 3d / 52d;
-                item.UnitsPerMonth = value * 3d / 12d;
+                item.UnitsPerYear = value;
+                item.UnitsPerWeek = value / CicPriceItem.WORK_WEEKS_PER_YEAR;
+                item.UnitsPerMonth = value / CicPriceItem.WORK_MONTHS_PER_YEAR;
                 break;
         }
 
@@ -218,8 +238,8 @@
             CicPeriod.Week => item.UnitsPerWeek,
             CicPeriod.Month => item.UnitsPerMonth,
             CicPeriod.Year => item.UnitsPerYear,
-            CicPeriod.AprAugNov => item.UnitsPerYear / 3d,
-            CicPeriod.AprJulOct => item.UnitsPerYear / 3d,
+            CicPeriod.AprAugNov => item.UnitsPerYear,
+            CicPeriod.AprJulOct => item.UnitsPerYear,
             _ => item.Units
         }, MidpointRounding.AwayFromZero);
 

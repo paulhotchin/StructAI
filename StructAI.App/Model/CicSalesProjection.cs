@@ -10,6 +10,10 @@ public class CicSalesProjection
 
 public class CicPriceItem
 {
+    public const int WORK_WEEKS_PER_YEAR = 48;
+    public const int WORK_MONTHS_PER_YEAR = 12;
+    public const int WORK_WEEKS_PER_MONTH = 4;
+
     public string Name { get; set; } = "";
     public double Price { get; set; }
     public double ProfitFactor { get; set; } = 0.4;
@@ -18,22 +22,13 @@ public class CicPriceItem
     public CicPeriod Period { get; set; } = CicPeriod.Week;
     public bool PeriodLocked { get; set; }
     public double UnitsPerWeek { get; set; } = 1;
-    public double UnitsPerMonth { get; set; } = 4;
-    public double UnitsPerYear { get; set; } = 48;
+    public double UnitsPerMonth { get; set; } = WORK_WEEKS_PER_MONTH;
+    public double UnitsPerYear { get; set; } = WORK_WEEKS_PER_YEAR;
 
     public double AnnualUnitCount =>
-        (UnitsPerWeek * 52) +
-        (UnitsPerMonth * 12) +
+        (UnitsPerWeek * WORK_WEEKS_PER_YEAR) +
+        (UnitsPerMonth * WORK_MONTHS_PER_YEAR) +
         UnitsPerYear;
-
-    public double AnnualRevenue => Price * AnnualUnitCount;
-
-    public double WeekEquivalentFromMonth => UnitsPerMonth / 4d;
-    public double WeekEquivalentFromYear => UnitsPerYear / 52d;
-    public double MonthEquivalentFromWeek => UnitsPerWeek / 4d;
-    public double MonthEquivalentFromYear => UnitsPerYear / 12d;
-    public double YearEquivalentFromWeek => UnitsPerWeek * 52d;
-    public double YearEquivalentFromMonth => UnitsPerMonth * 12d;
 
     public double DisplayUnitsFor(CicPeriod period) => period switch
     {
