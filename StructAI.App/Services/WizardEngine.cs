@@ -27,7 +27,9 @@ public class WizardEngine
     }
 
     private string StorageKey =>
-        $"WizardModel_{_wizardId}";
+        _wizardId == "CicSalesProjection"
+            ? "WizardModel_CicSalesProjection_v2"
+            : $"WizardModel_{_wizardId}";
 
     public async Task LoadMetadataAsync(HttpClient http)
     {
@@ -108,11 +110,6 @@ public class WizardEngine
                     json,
                     _jsonOptions)
         };
-
-        if (Model is CicSalesProjection cic)
-        {
-            cic.EnsureRequiredItems();
-        }
 
         if (Model is null)
         {
@@ -323,22 +320,6 @@ public class WizardEngine
                 break;
 
             case "CicSalesProjection":
-                if (Model is CicSalesProjection cic)
-                {
-                    if (cic.PriceItems.Count == 0)
-                    {
-                        cic.PriceItems = new List<CicPriceItem>
-                        {
-                            new() { Name = "Assessment", Price = cic.AssessmentPrice },
-                            new() { Name = "Debrief", Price = cic.DebriefPrice },
-                            new() { Name = "ADV & Debrief", Price = cic.AdvDebriefPrice },
-                            new() { Name = "ADV pilot of 3", Price = cic.AdvPilotThreePrice },
-                            new() { Name = "ADV pilot of 6", Price = cic.AdvPilotSixPrice }
-                        };
-                    }
-
-                    cic.SyncLegacyPrices();
-                }
                 break;
         }
     }

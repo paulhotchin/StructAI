@@ -160,7 +160,6 @@
             UnitsPerYear = 48
         });
 
-        cic.SyncLegacyPrices();
         Engine.NotifyModelChanged();
     }
 
@@ -176,11 +175,6 @@
     private void UpdateItemPrice(CicPriceItem item, double value)
     {
         item.Price = value;
-        if (Engine.Model is CicSalesProjection cic)
-        {
-            cic.SyncLegacyPrices();
-        }
-
         Engine.NotifyModelChanged();
     }
 
@@ -238,7 +232,6 @@
             return;
 
         cic.PriceItems.Remove(item);
-        cic.SyncLegacyPrices();
         Engine.NotifyModelChanged();
     }
 
