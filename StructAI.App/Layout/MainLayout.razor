@@ -68,9 +68,11 @@
 <!-- MOBILE TOP BAR -->
 <div class="menu-bar">
     <div class="menu-bar-inner">
-        <span class="app-title">StructAI v1.1</span>
-        <span class="css-version" aria-label="CSS version"></span>
-
+        <span class="app-title">@(AppSettings.Settings?.TitleMobile ?? string.Empty)</span>
+        @if ((AppSettings.Settings?.Id ?? string.Empty) != "Innermetrix-CIC")
+        {
+            <span class="css-version" aria-label="CSS version"></span>
+        }
         <button class="navbar-toggler" @onclick="ToggleMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
