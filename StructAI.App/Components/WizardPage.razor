@@ -67,8 +67,9 @@
 
         Engine.BeginLoad();
 
-        var metadataPath = $"AppData/metadata/{Id}Wizard.json";
-        var modelPath    = $"AppData/models/{Id}.json";
+        var cacheBust = Guid.NewGuid().ToString("N");
+        var metadataPath = $"AppData/metadata/{Id}Wizard.json?cacheBust={cacheBust}";
+        var modelPath    = $"AppData/models/{Id}.json?cacheBust={cacheBust}";
 
         await Engine.LoadMetadataAsync(Http, metadataPath);
         await Engine.LoadModelAsync(Http, modelPath, Id);

@@ -66,6 +66,7 @@ public class WizardEngine
         Definition.AttachEngine(this);
         _wizardId = GetWizardId(metadataPath);
         CurrentStepIndex = 0;
+        NotifyModelChanged();
     }
 
     public async Task LoadModelAsync(

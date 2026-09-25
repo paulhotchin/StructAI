@@ -23,7 +23,7 @@
                     <col class="cic-entry-period-column" />
                     <col class="cic-entry-number-column" />
                     <col class="cic-entry-profit-column" />
-                    <col class="cic-entry-action-column" />
+                    @* <col class="cic-entry-action-column" /> *@
                 </colgroup>
                 <thead>
                     <tr>
@@ -31,12 +31,12 @@
                         <th rowspan="2">Price</th>
                         <th colspan="2">Projected Sales</th>
                         <th rowspan="2">Gross Profit</th>
-                        <th></th>
+                        @* <th></th> *@
                     </tr>
                     <tr>
                         <th>Period</th>
                         <th>Number</th>
-                        <th></th>
+                        @* <th></th> *@
                     </tr>
                 </thead>
                 <tbody>
@@ -141,7 +141,7 @@
                     else
                     {
                         <tr>
-                            <th>@item.Name</th>
+                            <td>@item.Name</td>
                             <td>@FormatNumeric(item.UnitsPerWeek)</td>
                             <td>@FormatCurrency(item.RevenuePerWeek)</td>
                             <td>@FormatNumeric(item.UnitsPerMonth)</td>

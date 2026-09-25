@@ -22,8 +22,15 @@
         @if (IsWizardPage)
         {
             <!-- Wizard Top Bar -->
-            <TopActionBar Title="@CurrentPageTitle" OnSave="Save" />
-
+            @if (RequiresSaveButton)
+            {
+                <TopActionBar Title="@CurrentPageTitle" OnSave="Save" />
+            }
+            else
+            {
+                <TopActionBar Title="@CurrentPageTitle" />
+            }
+                       
             @if (_showSavedMessage)
             {
                 <div class="save-status" role="status">Saved</div>
@@ -96,6 +103,18 @@
         Engine?.Definition?.Steps == null || Engine.Definition.Steps.Count == 0
             ? "Loading..."
             : Engine.CurrentStep?.Name ?? "Untitled";
+
+    @* EventCallback CurrentSaveCallback =>
+        Engine?.Definition?.Steps == null || Engine.Definition.Steps.Count == 0
+            ? EventCallback.Empty
+            : Engine.CurrentStep?.RequiresSaveButton == true
+                ? EventCallback.Factory.Create(this, Save)
+                : EventCallback.Empty;   *@
+
+    bool RequiresSaveButton =>
+        Engine?.Definition?.Steps == null || Engine.Definition.Steps.Count == 0
+            ? false
+            : Engine.CurrentStep?.RequiresSaveButton == true;
 
     private async Task Save()
     {

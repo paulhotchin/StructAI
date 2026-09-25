@@ -1,6 +1,7 @@
 ﻿// E:\work\TQ\Kepler\StructAI\StructAI.App\Wizard\WizardDefinition.cs
 using StructAI.Services;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace StructAI.Wizard;
 
@@ -27,6 +28,9 @@ public class WizardStep
         set => Name = value;
     }
     public string? Description { get; set; }
+
+    [JsonPropertyName("requiresSaveButton")]
+    public bool RequiresSaveButton { get; set; }
     public List<WizardField> Fields { get; set; } = new();
 }
 
