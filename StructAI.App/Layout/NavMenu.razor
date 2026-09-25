@@ -1,60 +1,35 @@
 ﻿@* E:\work\TQ\Kepler\StructAI\StructAI.App\Layout\NavMenu.razor *@
 @inject NavigationManager Nav
+@inject AppSettingsService AppSettings
 
 <div class="nav-menu">
     <nav class="flex-column">
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="@HomeUrl" Match="NavLinkMatch.All" @onclick="OnToggle">
-                <span class="bi bi-house-door-fill-nav-menu"></span> Home
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="@SiteGeometryUrl" @onclick="OnToggle">
-                <span class="bi bi-house-door-fill-nav-menu"></span> Site Geometry
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="@CeoValueTimeUrl" @onclick="OnToggle">
-                <span class="bi bi-clock-fill-nav-menu"></span> CEO - Value Your Time
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="@CicSalesProjectionUrl" @onclick="OnToggle">
-                <span class="bi bi-bar-chart-fill-nav-menu"></span> CIC Sales Projection
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter" @onclick="OnToggle">
-                <span class="bi bi-plus-square-fill-nav-menu"></span> Counter
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather" @onclick="OnToggle">
-                <span class="bi bi-list-nested-nav-menu"></span> Weather
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="@StructAiNewProjectUrl" @onclick="OnToggle">
-                <span class="bi bi-grid-fill-nav-menu"></span> Struct AI - New Project
-            </NavLink>
-        </div>
+        @foreach (var project in AppSettings.EnabledProjects)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link"
+                         href="@ProjectUrl(project)"
+                         Match="@(string.IsNullOrWhiteSpace(project.Url) ? NavLinkMatch.All : NavLinkMatch.Prefix)"
+                         @onclick="OnToggle">
+                    <span class="bi bi-grid-fill-nav-menu"></span> @project.Title
+                </NavLink>
+            </div>
+        }
 
     </nav>
 </div>
 
 @code {
-    private string HomeUrl => Nav.BaseUri.TrimEnd('/');
-    private string SiteGeometryUrl => $"{Nav.BaseUri.TrimEnd('/')}/site-geometry";
-    private string CeoValueTimeUrl => $"{Nav.BaseUri.TrimEnd('/')}/ceo-value-time";
-    private string StructAiNewProjectUrl => $"{Nav.BaseUri.TrimEnd('/')}/structai-new-project";
-    private string CicSalesProjectionUrl => $"{Nav.BaseUri.TrimEnd('/')}/cic-sales-projection";
+    protected override async Task OnInitializedAsync()
+    {
+        if (AppSettings.Settings is null)
+            await AppSettings.LoadAsync();
+    }
+
+    private string ProjectUrl(AppProject project) =>
+        string.IsNullOrWhiteSpace(project.Url)
+            ? Nav.BaseUri.TrimEnd('/')
+            : $"{Nav.BaseUri.TrimEnd('/')}/{project.Url.TrimStart('/')}";
 
     // Called by MainLayout when NavMenu is inside the overlay.
     // Does nothing when NavMenu is inside the desktop sidebar.

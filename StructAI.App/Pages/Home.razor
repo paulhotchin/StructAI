@@ -1,18 +1,19 @@
 ﻿@page "/"
 
 @inject NavigationManager Nav
+@inject AppSettingsService AppSettings
 
-<PageTitle>StructAI Projects</PageTitle>
+<PageTitle>@(AppSettings.Settings?.PageTitle ?? "StructAI")</PageTitle>
 
 <div class="project-selector">
-	<h1>StructAI Projects</h1>
+	<h1>@(AppSettings.Settings?.ProjectType ?? string.Empty) Projects</h1>
 
 	<div class="project-select-row">
 		<label for="project-select">Project</label>
-		<select id="project-select" class="form-select" @bind="SelectedProjectKey">
+        <select id="project-select" class="form-select" @bind="SelectedProjectKey">
 			@foreach (var project in Projects)
 			{
-				<option value="@project.Key">@project.Name</option>
+				<option value="@project.Url">@project.Title</option>
 			}
 		</select>
 		<button class="btn btn-primary" type="button" @onclick="OpenSelectedProject">
@@ -55,26 +56,26 @@
 	private bool ShowAddProject;
 	private bool ShowValidationError;
 	private string ValidationMessage = string.Empty;
-	private string? SelectedProjectKey = "site-geometry";
+	private string? SelectedProjectKey;
 	private string NewProjectName = string.Empty;
 	private string NewProjectRoute = string.Empty;
 
-	private List<ProjectOption> Projects { get; } = new()
+	private IReadOnlyList<AppProject> Projects => AppSettings.EnabledProjects
+		.Where(project => !string.IsNullOrWhiteSpace(project.Url))
+		.ToList();
+
+	protected override async Task OnInitializedAsync()
 	{
-		new("site-geometry", "Site Geometry"),
-		new("ceo-value-time", "CEO - Value Your Time"),
-		new("cic-sales-projection", "CIC Sales Projection"),
-		new("counter", "Counter"),
-		new("weather", "Weather"),
-		new("structai-new-project", "Struct AI - New Project")
-	};
+		await AppSettings.LoadAsync();
+		SelectedProjectKey = Projects.FirstOrDefault()?.Url;
+	}
 
 	private void OpenSelectedProject()
 	{
-		var project = Projects.FirstOrDefault(item => item.Key == SelectedProjectKey);
+		var project = Projects.FirstOrDefault(item => item.Url == SelectedProjectKey);
 
 		if (project is not null)
-			Nav.NavigateTo($"{Nav.BaseUri.TrimEnd('/')}/{project.Key}");
+			Nav.NavigateTo($"{Nav.BaseUri.TrimEnd('/')}/{project.Url.TrimStart('/')}");
 	}
 
 	private void ToggleAddProject() => ShowAddProject = !ShowAddProject;
@@ -103,5 +104,4 @@
 
 	private void CloseValidationError() => ShowValidationError = false;
 
-	private sealed record ProjectOption(string Key, string Name);
 }

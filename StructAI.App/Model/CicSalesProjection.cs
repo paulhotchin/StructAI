@@ -14,6 +14,7 @@ public class CicPriceItem
     public const int WORK_MONTHS_PER_YEAR = 12;
     public const int WORK_WEEKS_PER_MONTH = 4;
 
+    public string Enabled { get; set; } = "Y";
     public string Name { get; set; } = "";
     public double Price { get; set; }
     public double ProfitFactor { get; set; } = 0.4;

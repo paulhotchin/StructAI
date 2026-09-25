@@ -18,6 +18,7 @@
 
             <table class="table table-bordered cic-table cic-entry-table">
                 <colgroup>
+                    <col class="cic-entry-enabled-column" />
                     <col class="cic-entry-item-column" />
                     <col class="cic-entry-price-column" />
                     <col class="cic-entry-period-column" />
@@ -27,6 +28,13 @@
                 </colgroup>
                 <thead>
                     <tr>
+                        <th rowspan="2">
+                            <button type="button"
+                                    class="cic-enabled-toggle"
+                                    @onclick="() => ToggleAllItems(cic)">
+                                @AllItemsEnabled(cic)
+                            </button>
+                        </th>
                         <th rowspan="2">Products & Services</th>
                         <th rowspan="2">Price</th>
                         <th colspan="2">Projected Sales</th>
@@ -43,6 +51,13 @@
                     @foreach (var item in cic.PriceItems)
                     {
                         <tr>
+                            <td>
+                                <button type="button"
+                                        class="cic-enabled-toggle"
+                                        @onclick="() => ToggleItem(item)">
+                                    @item.Enabled
+                                </button>
+                            </td>
                             <td>
                                 <input class="form-control"
                                        value="@item.Name"
@@ -122,6 +137,11 @@
             <tbody>
                 @foreach (var item in cic.PriceItems)
                 {
+                    if (!IsEnabled(item))
+                    {
+                        continue;
+                    }
+
                     if (item.PeriodLocked)
                     {
                         const double APRAUGNOV_MULTIPLIER = 16d;
@@ -151,6 +171,15 @@
                         </tr>
                     }
                 }
+                <tr class="cic-results-total-row">
+                    <td></td>
+                    <td class="cic-total-label">Total:</td>
+                    <td>@FormatCurrency(TotalRevenueFor(cic, CicPeriod.Week))</td>
+                    <td class="cic-total-label">Total:</td>
+                    <td>@FormatCurrency(TotalRevenueFor(cic, CicPeriod.Month))</td>
+                    <td class="cic-total-label">Total:</td>
+                    <td>@FormatCurrency(TotalRevenueFor(cic, CicPeriod.Year))</td>
+                </tr>
             </tbody>
         </table>
     }
@@ -171,6 +200,7 @@
 
         cic.PriceItems.Add(new CicPriceItem
         {
+            Enabled = "Y",
             Name = $"Item {cic.PriceItems.Count + 1}",
             Price = 0,
             Units = 1,
@@ -190,6 +220,53 @@
 
         item.Name = value;
         Engine.NotifyModelChanged();
+    }
+
+    private static string AllItemsEnabled(CicSalesProjection cic) =>
+        cic.PriceItems.Count > 0 && cic.PriceItems.All(IsEnabled) ? "Y" : "N";
+
+    private void ToggleAllItems(CicSalesProjection cic)
+    {
+        var enabled = AllItemsEnabled(cic) == "Y" ? "N" : "Y";
+
+        foreach (var item in cic.PriceItems)
+            item.Enabled = enabled;
+
+        Engine.NotifyModelChanged();
+    }
+
+    private void ToggleItem(CicPriceItem item)
+    {
+        item.Enabled = IsEnabled(item) ? "N" : "Y";
+        Engine.NotifyModelChanged();
+    }
+
+    private static bool IsEnabled(CicPriceItem item) =>
+        string.Equals(item.Enabled, "Y", StringComparison.OrdinalIgnoreCase);
+
+    private static double TotalRevenueFor(CicSalesProjection cic, CicPeriod period) =>
+        cic.PriceItems
+            .Where(IsEnabled)
+            .Sum(item => RevenueForResults(item, period));
+
+    private static double RevenueForResults(CicPriceItem item, CicPeriod period)
+    {
+        if (!item.PeriodLocked)
+            return item.RevenueFor(period);
+
+        const double APRAUGNOV_MULTIPLIER = 16d;
+        const double APRJULOCT_MULTIPLIER = 18d;
+        var annualRevenue = (item.Period == CicPeriod.AprAugNov
+            ? item.Price * APRAUGNOV_MULTIPLIER
+            : item.Price * APRJULOCT_MULTIPLIER) * item.Units;
+
+        return period switch
+        {
+            CicPeriod.Week => annualRevenue / CicPriceItem.WORK_WEEKS_PER_YEAR,
+            CicPeriod.Month => annualRevenue / CicPriceItem.WORK_MONTHS_PER_YEAR,
+            CicPeriod.Year => annualRevenue,
+            _ => 0
+        };
     }
 
     private void UpdateItemPrice(CicPriceItem item, double value)
@@ -265,6 +342,9 @@
 
             foreach (var item in cic.PriceItems)
             {
+                if (!IsEnabled(item))
+                    continue;
+
                 if (item.Period is CicPeriod.AprAugNov or CicPeriod.AprJulOct)
                 {
                     var startMonths = item.Period == CicPeriod.AprAugNov

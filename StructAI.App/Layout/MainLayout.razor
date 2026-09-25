@@ -3,11 +3,17 @@
 @implements IDisposable
 @inject NavigationManager Nav
 @inject WizardEngine Engine
+@inject AppSettingsService AppSettings
+
+<PageTitle>@(AppSettings.Settings?.PageTitle ?? "StructAI")</PageTitle>
 
 <!-- DESKTOP TITLE BAR -->
 <div class="desktop-title-bar">
-    <span>StructAI v1.1</span>
-    <span class="css-version" aria-label="CSS version"></span>
+    <span>@(AppSettings.Settings?.Title ?? string.Empty)</span>
+    @if ((AppSettings.Settings?.Id ?? string.Empty) != "Innermetrix-CIC")
+    {
+        <span class="css-version" aria-label="CSS version"></span>
+    }
 </div>
 
 <!-- DESKTOP SIDEBAR -->
@@ -85,6 +91,7 @@
     protected override void OnInitialized()
     {
         Engine.ModelChanged += OnEngineChanged;
+        AppSettings.SettingsChanged += OnSettingsChanged;
     }
 
     private void OnEngineChanged()
@@ -92,9 +99,15 @@
         _ = InvokeAsync(StateHasChanged);
     }
 
+    private void OnSettingsChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
     public void Dispose()
     {
         Engine.ModelChanged -= OnEngineChanged;
+        AppSettings.SettingsChanged -= OnSettingsChanged;
     }
 
     void ToggleMenu() => isMenuOpen = !isMenuOpen;

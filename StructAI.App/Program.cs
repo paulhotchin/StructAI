@@ -27,6 +27,7 @@ builder.Services.AddScoped(sp => new HttpClient
 
 // Wizard engine
 builder.Services.AddScoped<WizardEngine>();
+builder.Services.AddScoped<AppSettingsService>();
 
 // Load command schema JSON BEFORE Build()
 // IMPORTANT: StructAI must contain: wwwroot/AppData/metadata/command-schema.json
