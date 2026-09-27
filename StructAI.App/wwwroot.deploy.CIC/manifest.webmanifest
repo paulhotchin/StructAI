@@ -1,0 +1,28 @@
+{
+  "name": "StructAI",
+  "short_name": "StructAI",
+  "id": "/CIC/",
+  "start_url": "/CIC/",
+  "scope": "/CIC/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#03173d",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/CIC/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/CIC/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    },
+    {
+      "src": "/CIC/favicon.png",
+      "type": "image/png",
+      "sizes": "64x64"
+    }
+  ]
+}

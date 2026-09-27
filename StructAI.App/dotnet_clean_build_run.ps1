@@ -1,5 +1,12 @@
 # E:\work\TQ\Kepler\StructAI\StructAI.App\dotnet_clean_build_run.ps1
-Write-Host "=== Clean Build Run StructAI.App ==="
+$srcRoot   = "E:\work\TQ\Kepler\StructAI\StructAI.App"
+
+# Write-Host "=== Clean Build Run StructAI.App ==="
+# Copy-Item "$srcRoot\Configs\paulhotchin-StructAI-App\AppSettings.json" "$srcRoot\wwwroot\AppData\metadata\AppSettings.json" -Force
+
+Write-Host "=== Build Innermetrix-CIC ==="
+Copy-Item "$srcRoot\Configs\Innermetrix-CIC\AppSettings.json" "$srcRoot\wwwroot\AppData\metadata\AppSettings.json" -Force
+
 dotnet clean
 dotnet build --no-restore
 

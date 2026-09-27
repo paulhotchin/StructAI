@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
-
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
@@ -21,5 +20,12 @@
   <EnableDefaultRazorCompileOnBuild>true</EnableDefaultRazorCompileOnBuild>
   <EnableDefaultRazorGenerate>true</EnableDefaultRazorGenerate>
 </PropertyGroup>
+
+<ItemGroup>
+  <Content Update="wwwroot/AppData/metadata/AppSettings.json">
+    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+  </Content>
+</ItemGroup>
 
 </Project>
