@@ -80,7 +80,7 @@
                                     <option value="@CicPeriod.Month">Month</option>
                                     <option value="@CicPeriod.Year">Year</option>
                                     <option value="@CicPeriod.AprAugNov">Apr Aug Nov</option>
-                                    <option value="@CicPeriod.AprJulOct">Apr Jul Oct</option>
+                                    <option value="@CicPeriod.AprSep">Apr Sep</option>
                                 </InputSelect>
                             </td>
                             <td>
@@ -297,7 +297,7 @@
                 item.UnitsPerMonth = value / CicPriceItem.WORK_MONTHS_PER_YEAR;
                 break;
             case CicPeriod.AprAugNov:
-            case CicPeriod.AprJulOct:
+            case CicPeriod.AprSep:
                 item.UnitsPerYear = value;
                 item.UnitsPerWeek = value / CicPriceItem.WORK_WEEKS_PER_YEAR;
                 item.UnitsPerMonth = value / CicPriceItem.WORK_MONTHS_PER_YEAR;
@@ -316,7 +316,7 @@
             CicPeriod.Month => item.UnitsPerMonth,
             CicPeriod.Year => item.UnitsPerYear,
             CicPeriod.AprAugNov => item.UnitsPerYear,
-            CicPeriod.AprJulOct => item.UnitsPerYear,
+            CicPeriod.AprSep => item.UnitsPerYear,
             _ => item.Units
         }, MidpointRounding.AwayFromZero);
 
@@ -345,11 +345,11 @@
                 if (!IsEnabled(item))
                     continue;
 
-                if (item.Period is CicPeriod.AprAugNov or CicPeriod.AprJulOct)
+                if (item.Period is CicPeriod.AprAugNov or CicPeriod.AprSep)
                 {
                     var startMonths = item.Period == CicPeriod.AprAugNov
                         ? new[] { 3, 7, 10 }
-                        : new[] { 3, 6, 9 };
+                        : new[] { 3, 8 };
 
                     for (var month = 0; month < 12; month++)
                     {

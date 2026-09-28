@@ -52,5 +52,5 @@ public enum CicPeriod
     Month,
     Year,
     AprAugNov,
-    AprJulOct
+    AprSep
 }
